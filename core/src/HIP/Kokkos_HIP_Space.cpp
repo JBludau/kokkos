@@ -241,6 +241,15 @@ void HIPHostPinnedSpace::impl_deallocate(
   KOKKOS_IMPL_HIP_SAFE_CALL(hipHostFree(arg_alloc_ptr));
 }
 
+//----------------------------------------------------------------------------
+bool HIPUnifiedSpace::available() {
+  int hasUnifiedMemory = 0; // false per default
+  hipDeviceGetAttribute(&hasUnifiedMemory,
+                         hipDeviceAttributeManagedMemory,
+                         HIPInternal::singleton().m_hipDev);
+  return hasUnifiedMemory;
+}
+
 }  // namespace Experimental
 }  // namespace Kokkos
 

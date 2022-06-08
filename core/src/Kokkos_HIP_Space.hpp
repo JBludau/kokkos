@@ -214,6 +214,77 @@ struct Impl::is_hip_type_space<Experimental::HIPHostPinnedSpace>
 /*--------------------------------------------------------------------------*/
 
 namespace Kokkos {
+namespace Experimental {
+/** \brief  Memory that is accessible to HIP execution space
+ *          and host through HIP's memory page migration.
+ */
+class HIPUnifiedSpace {
+ public:
+  //! Tag this class as a kokkos memory space
+  /** \brief  Memory is unified to both device and host via page migration
+   *  and therefore able to be used by HostSpace::execution_space and 
+   *  DeviceSpace::execution_space.
+   */
+  //! tag this class as a kokkos memory space
+  using memory_space    = HIPUnifiedSpace;
+  using execution_space = Kokkos::HIP;
+  using device_type     = Kokkos::Device<execution_space, memory_space>;
+  using size_type       = unsigned int;
+
+  /** \brief if unified memory is available */
+  static bool available();
+
+  /*--------------------------------*/
+
+  HIPUnifiedSpace();
+  HIPUnifiedSpace(HIPUnifiedSpace&& rhs)      = default;
+  HIPUnifiedSpace(const HIPUnifiedSpace& rhs) = default;
+  HIPUnifiedSpace& operator=(HIPUnifiedSpace&& rhs) = default;
+  HIPUnifiedSpace& operator=(const HIPUnifiedSpace& rhs) = default;
+  ~HIPUnifiedSpace()                                        = default;
+
+  /**\brief  Allocate untracked memory in the space */
+  void* allocate(const size_t arg_alloc_size) const;
+  void* allocate(const char* arg_label, const size_t arg_alloc_size,
+                 const size_t arg_logical_size = 0) const;
+
+  /**\brief  Deallocate untracked memory in the space */
+  void deallocate(void* const arg_alloc_ptr, const size_t arg_alloc_size) const;
+  void deallocate(const char* arg_label, void* const arg_alloc_ptr,
+                  const size_t arg_alloc_size,
+                  const size_t arg_logical_size = 0) const;
+
+ private:
+  template <class, class, class, class>
+  friend class LogicalMemorySpace;
+  void* impl_allocate(const char* arg_label, const size_t arg_alloc_size,
+                      const size_t arg_logical_size = 0,
+                      const Kokkos::Tools::SpaceHandle =
+                          Kokkos::Tools::make_space_handle(name())) const;
+  void impl_deallocate(const char* arg_label, void* const arg_alloc_ptr,
+                       const size_t arg_alloc_size,
+                       const size_t arg_logical_size = 0,
+                       const Kokkos::Tools::SpaceHandle =
+                           Kokkos::Tools::make_space_handle(name())) const;
+
+ public:
+  /**\brief Return Name of the MemorySpace */
+  static constexpr const char* name() { return "HIPUnified"; }
+
+  /*--------------------------------*/
+};
+}  // namespace Experimental
+
+template <>
+struct Impl::is_hip_type_space<Experimental::HIPUnifiedSpace>
+    : public std::true_type {};
+
+}  // namespace Kokkos
+
+/*--------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------*/
+
+namespace Kokkos {
 namespace Impl {
 
 static_assert(
