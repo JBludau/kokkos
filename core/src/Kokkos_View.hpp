@@ -1457,6 +1457,19 @@ class View : public ViewTraits<DataType, Properties...> {
           "Kokkos::View<...>::View: fence before allocating UVM");
     }
 #endif
+#if defined(KOKKOS_ENABLE_HIP)
+    // If allocating in HIPUnified must fence before and after
+    // the allocation to protect against possible concurrent access
+    // on the CPU and the GPU.
+    // Fence using the trait's execution space (which will be Kokkos::HIP)
+    // to avoid incomplete type errors from using Kokkos::Cuda directly.
+    if (std::is_same<Kokkos::HIPUnifiedSpace,
+                     typename traits::device_type::memory_space>::value) {
+      typename traits::device_type::memory_space::execution_space().fence(
+          "Kokkos::View<...>::View: fence before allocating HIPUnified");
+    }
+#endif
+
     //------------------------------------------------------------
 
     Kokkos::Impl::SharedAllocationRecord<>* record = m_map.allocate_shared(
@@ -1468,6 +1481,13 @@ class View : public ViewTraits<DataType, Properties...> {
                      typename traits::device_type::memory_space>::value) {
       typename traits::device_type::memory_space::execution_space().fence(
           "Kokkos::View<...>::View: fence after allocating UVM");
+    }
+#endif
+#if defined(KOKKOS_ENABLE_HIP)
+    if (std::is_same<Kokkos::HIPUnifiedSpace,
+                     typename traits::device_type::memory_space>::value) {
+      typename traits::device_type::memory_space::execution_space().fence(
+          "Kokkos::View<...>::View: fence after allocating HIPUnified");
     }
 #endif
     //------------------------------------------------------------
