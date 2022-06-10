@@ -244,9 +244,8 @@ void HIPHostPinnedSpace::impl_deallocate(
 //----------------------------------------------------------------------------
 bool HIPUnifiedSpace::available() {
   int hasUnifiedMemory = 0; // false per default
-  hipDeviceGetAttribute(&hasUnifiedMemory,
-                         hipDeviceAttributeManagedMemory,
-                         HIPInternal::singleton().m_hipDev);
+  hipDeviceGetAttribute(&hasUnifiedMemory, hipDeviceAttributeManagedMemory,
+                        Impl::HIPInternal::singleton().m_hipDev);
   return hasUnifiedMemory;
 }
 

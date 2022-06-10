@@ -227,7 +227,7 @@ class HIPUnifiedSpace {
    */
   //! tag this class as a kokkos memory space
   using memory_space    = HIPUnifiedSpace;
-  using execution_space = Kokkos::HIP;
+  using execution_space = Kokkos::Experimental::HIP;
   using device_type     = Kokkos::Device<execution_space, memory_space>;
   using size_type       = unsigned int;
 
@@ -310,6 +310,15 @@ struct MemorySpaceAccess<Kokkos::HostSpace,
   enum : bool { deepcopy = true };
 };
 
+template <>
+struct MemorySpaceAccess<Kokkos::HostSpace,
+                         Kokkos::Experimental::HIPUnifiedSpace> {
+  // HostSpace::execution_space != HIPUnifiedSpace::execution_space
+  enum : bool { assignable = false };
+  enum : bool { accessible = true };
+  enum : bool { deepcopy = true };
+};
+
 //----------------------------------------
 
 template <>
@@ -325,6 +334,15 @@ struct MemorySpaceAccess<Kokkos::Experimental::HIPSpace,
   // HIPSpace::execution_space != HIPHostPinnedSpace::execution_space
   enum : bool { assignable = false };
   enum : bool { accessible = true };  // HIPSpace::execution_space
+  enum : bool { deepcopy = true };
+};
+
+template <>
+struct MemorySpaceAccess<Kokkos::Experimental::HIPSpace,
+                         Kokkos::Experimental::HIPUnifiedSpace> {
+  // HIPSpace::execution_space == HIPUnifiedSpace::execution_space
+  enum : bool { assignable = true };
+  enum : bool { accessible = true };
   enum : bool { deepcopy = true };
 };
 
@@ -345,6 +363,42 @@ struct MemorySpaceAccess<Kokkos::Experimental::HIPHostPinnedSpace,
                          Kokkos::Experimental::HIPSpace> {
   enum : bool { assignable = false };  // Cannot access from Host
   enum : bool { accessible = false };
+  enum : bool { deepcopy = true };
+};
+
+template <>
+struct MemorySpaceAccess<Kokkos::Experimental::HIPHostPinnedSpace,
+                         Kokkos::Experimental::HIPUnifiedSpace> {
+  enum : bool { assignable = false };  // different exec_space
+  enum : bool { accessible = true };
+  enum : bool { deepcopy = true };
+};
+
+//----------------------------------------
+// HIPUnifiedSpace::execution_space != HostSpace::execution_space
+// HIPUnifiedSpace accessible to both HIP and Host
+
+template <>
+struct MemorySpaceAccess<Kokkos::Experimental::HIPUnifiedSpace,
+                         Kokkos::HostSpace> {
+  enum : bool { assignable = false };  // Cannot access from HIP
+  enum : bool { accessible = false };  // HIPHostPinnedSpace::execution_space
+  enum : bool { deepcopy = true };
+};
+
+template <>
+struct MemorySpaceAccess<Kokkos::Experimental::HIPUnifiedSpace,
+                         Kokkos::Experimental::HIPSpace> {
+  enum : bool { assignable = false };
+  enum : bool { accessible = true };
+  enum : bool { deepcopy = true };
+};
+
+template <>
+struct MemorySpaceAccess<Kokkos::Experimental::HIPUnifiedSpace,
+                         Kokkos::Experimental::HIPHostPinnedSpace> {
+  enum : bool { assignable = false };  // different exec_space
+  enum : bool { accessible = true };
   enum : bool { deepcopy = true };
 };
 
