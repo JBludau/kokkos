@@ -1463,7 +1463,7 @@ class View : public ViewTraits<DataType, Properties...> {
     // on the CPU and the GPU.
     // Fence using the trait's execution space (which will be Kokkos::HIP)
     // to avoid incomplete type errors from using Kokkos::Cuda directly.
-    if (std::is_same<Kokkos::HIPUnifiedSpace,
+    if (std::is_same<Kokkos::Experimental::HIPUnifiedSpace,
                      typename traits::device_type::memory_space>::value) {
       typename traits::device_type::memory_space::execution_space().fence(
           "Kokkos::View<...>::View: fence before allocating HIPUnified");
@@ -1484,7 +1484,7 @@ class View : public ViewTraits<DataType, Properties...> {
     }
 #endif
 #if defined(KOKKOS_ENABLE_HIP)
-    if (std::is_same<Kokkos::HIPUnifiedSpace,
+    if (std::is_same<Kokkos::Experimental::HIPUnifiedSpace,
                      typename traits::device_type::memory_space>::value) {
       typename traits::device_type::memory_space::execution_space().fence(
           "Kokkos::View<...>::View: fence after allocating HIPUnified");
