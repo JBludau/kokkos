@@ -318,6 +318,11 @@ TEST(hip, impl_view_accessible) {
                         Kokkos::Experimental::HIP>::run();
   TestViewHIPAccessible<Kokkos::Experimental::HIPHostPinnedSpace,
                         Kokkos::HostSpace::execution_space>::run();
+
+  TestViewHIPAccessible<Kokkos::Experimental::HIPUnifiedSpace,
+                        Kokkos::HostSpace::execution_space>::run();
+  TestViewHIPAccessible<Kokkos::Experimental::HIPUnifiedSpace,
+                        Kokkos::Experimental::HIP>::run();
 }
 
 }  // namespace Test
