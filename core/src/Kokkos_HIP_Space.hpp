@@ -593,6 +593,36 @@ class SharedAllocationRecord<Kokkos::Experimental::HIPHostPinnedSpace, void>
       const std::string& arg_label, const size_t arg_alloc_size,
       const RecordBase::function_type arg_dealloc = &base_t::deallocate);
 };
+
+template <>
+class SharedAllocationRecord<Kokkos::Experimental::HIPUnifiedSpace, void>
+    : public SharedAllocationRecordCommon<
+          Kokkos::Experimental::HIPUnifiedSpace> {
+ private:
+  friend class SharedAllocationRecordCommon<
+      Kokkos::Experimental::HIPUnifiedSpace>;
+  using base_t =
+      SharedAllocationRecordCommon<Kokkos::Experimental::HIPUnifiedSpace>;
+  using RecordBase = SharedAllocationRecord<void, void>;
+
+  SharedAllocationRecord(const SharedAllocationRecord&) = delete;
+  SharedAllocationRecord& operator=(const SharedAllocationRecord&) = delete;
+
+#ifdef KOKKOS_ENABLE_DEBUG
+  static RecordBase s_root_record;
+#endif
+
+  const Kokkos::Experimental::HIPUnifiedSpace m_space;
+
+ protected:
+  ~SharedAllocationRecord();
+  SharedAllocationRecord() = default;
+
+  SharedAllocationRecord(
+      const Kokkos::Experimental::HIPUnifiedSpace& arg_space,
+      const std::string& arg_label, const size_t arg_alloc_size,
+      const RecordBase::function_type arg_dealloc = &base_t::deallocate);
+};
 }  // namespace Impl
 }  // namespace Kokkos
 

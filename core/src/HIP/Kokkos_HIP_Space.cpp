@@ -130,6 +130,8 @@ HIPSpace::HIPSpace() : m_device(HIP().hip_device()) {}
 
 HIPHostPinnedSpace::HIPHostPinnedSpace() {}
 
+HIPUnifiedSpace::HIPUnifiedSpace() {}
+
 void* HIPSpace::allocate(const size_t arg_alloc_size) const {
   return allocate("[unlabeled]", arg_alloc_size);
 }
@@ -195,6 +197,39 @@ void* HIPHostPinnedSpace::impl_allocate(
 
   return ptr;
 }
+
+void* HIPUnifiedSpace::allocate(const size_t arg_alloc_size) const {
+  return allocate("[unlabeled]", arg_alloc_size);
+}
+void* HIPUnifiedSpace::allocate(const char* arg_label,
+                                const size_t arg_alloc_size,
+                                const size_t arg_logical_size) const {
+  return impl_allocate(arg_label, arg_alloc_size, arg_logical_size);
+}
+void* HIPUnifiedSpace::impl_allocate(
+    const char* arg_label, const size_t arg_alloc_size,
+    const size_t arg_logical_size,
+    const Kokkos::Tools::SpaceHandle arg_handle) const {
+  void* ptr = nullptr;
+
+  auto const error_code = hipMallocManaged(&ptr, arg_alloc_size);
+  if (error_code != hipSuccess) {
+    // This is the only way to clear the last error, which we should do here
+    // since we're turning it into an exception here
+    (void)hipGetLastError();
+    throw HIPRawMemoryAllocationFailure(
+        arg_alloc_size, error_code,
+        RawMemoryAllocationFailure::AllocationMechanism::HIPMallocManaged);
+  }
+  if (Kokkos::Profiling::profileLibraryLoaded()) {
+    const size_t reported_size =
+        (arg_logical_size > 0) ? arg_logical_size : arg_alloc_size;
+    Kokkos::Profiling::allocateData(arg_handle, arg_label, ptr, reported_size);
+  }
+
+  return ptr;
+}
+
 void HIPSpace::deallocate(void* const arg_alloc_ptr,
                           const size_t arg_alloc_size) const {
   deallocate("[unlabeled]", arg_alloc_ptr, arg_alloc_size);
@@ -241,6 +276,30 @@ void HIPHostPinnedSpace::impl_deallocate(
   KOKKOS_IMPL_HIP_SAFE_CALL(hipHostFree(arg_alloc_ptr));
 }
 
+void HIPUnifiedSpace::deallocate(void* const arg_alloc_ptr,
+                                 const size_t arg_alloc_size) const {
+  deallocate("[unlabeled]", arg_alloc_ptr, arg_alloc_size);
+}
+
+void HIPUnifiedSpace::deallocate(const char* arg_label,
+                                 void* const arg_alloc_ptr,
+                                 const size_t arg_alloc_size,
+                                 const size_t arg_logical_size) const {
+  impl_deallocate(arg_label, arg_alloc_ptr, arg_alloc_size, arg_logical_size);
+}
+void HIPUnifiedSpace::impl_deallocate(
+    const char* arg_label, void* const arg_alloc_ptr,
+    const size_t arg_alloc_size, const size_t arg_logical_size,
+    const Kokkos::Tools::SpaceHandle arg_handle) const {
+  if (Kokkos::Profiling::profileLibraryLoaded()) {
+    const size_t reported_size =
+        (arg_logical_size > 0) ? arg_logical_size : arg_alloc_size;
+    Kokkos::Profiling::deallocateData(arg_handle, arg_label, arg_alloc_ptr,
+                                      reported_size);
+  }
+  KOKKOS_IMPL_HIP_SAFE_CALL(hipFree(arg_alloc_ptr));
+}
+
 //----------------------------------------------------------------------------
 bool HIPUnifiedSpace::available() {
   int hasUnifiedMemory = 0; // false per default
@@ -264,6 +323,9 @@ SharedAllocationRecord<void, void>
 
 SharedAllocationRecord<void, void> SharedAllocationRecord<
     Kokkos::Experimental::HIPHostPinnedSpace, void>::s_root_record;
+
+SharedAllocationRecord<void, void> SharedAllocationRecord<
+    Kokkos::Experimental::HIPUnifiedSpace, void>::s_root_record;
 #endif
 
 SharedAllocationRecord<Kokkos::Experimental::HIPSpace,
@@ -275,6 +337,13 @@ SharedAllocationRecord<Kokkos::Experimental::HIPSpace,
 }
 
 SharedAllocationRecord<Kokkos::Experimental::HIPHostPinnedSpace,
+                       void>::~SharedAllocationRecord() {
+  m_space.deallocate(m_label.c_str(),
+                     SharedAllocationRecord<void, void>::m_alloc_ptr,
+                     SharedAllocationRecord<void, void>::m_alloc_size);
+}
+
+SharedAllocationRecord<Kokkos::Experimental::HIPUnifiedSpace,
                        void>::~SharedAllocationRecord() {
   m_space.deallocate(m_label.c_str(),
                      SharedAllocationRecord<void, void>::m_alloc_ptr,
@@ -331,6 +400,28 @@ SharedAllocationRecord<Kokkos::Experimental::HIPHostPinnedSpace, void>::
           arg_label),
       m_space(arg_space) {
   // Fill in the Header information, directly accessible via host pinned memory
+  this->base_t::_fill_host_accessible_header_info(*RecordBase::m_alloc_ptr,
+                                                  arg_label);
+}
+
+SharedAllocationRecord<Kokkos::Experimental::HIPUnifiedSpace, void>::
+    SharedAllocationRecord(
+        const Kokkos::Experimental::HIPUnifiedSpace& arg_space,
+        const std::string& arg_label, const size_t arg_alloc_size,
+        const SharedAllocationRecord<void, void>::function_type arg_dealloc)
+    // Pass through allocated [ SharedAllocationHeader , user_memory ]
+    // Pass through deallocation function
+    : base_t(
+#ifdef KOKKOS_ENABLE_DEBUG
+          &SharedAllocationRecord<Kokkos::Experimental::HIPUnifiedSpace,
+                                  void>::s_root_record,
+#endif
+          Kokkos::Impl::checked_allocation_with_header(arg_space, arg_label,
+                                                       arg_alloc_size),
+          sizeof(SharedAllocationHeader) + arg_alloc_size, arg_dealloc,
+          arg_label),
+      m_space(arg_space) {
+  // Fill in the Header information, directly accessible via unified memory
   this->base_t::_fill_host_accessible_header_info(*RecordBase::m_alloc_ptr,
                                                   arg_label);
 }
@@ -498,6 +589,8 @@ template class HostInaccessibleSharedAllocationRecordCommon<
 template class SharedAllocationRecordCommon<Kokkos::Experimental::HIPSpace>;
 template class SharedAllocationRecordCommon<
     Kokkos::Experimental::HIPHostPinnedSpace>;
+template class SharedAllocationRecordCommon<
+    Kokkos::Experimental::HIPUnifiedSpace>;
 
 }  // end namespace Impl
 }  // end namespace Kokkos
