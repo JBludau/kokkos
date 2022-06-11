@@ -222,7 +222,7 @@ class HIPUnifiedSpace {
  public:
   //! Tag this class as a kokkos memory space
   /** \brief  Memory is unified to both device and host via page migration
-   *  and therefore able to be used by HostSpace::execution_space and 
+   *  and therefore able to be used by HostSpace::execution_space and
    *  DeviceSpace::execution_space.
    */
   //! tag this class as a kokkos memory space
@@ -241,7 +241,7 @@ class HIPUnifiedSpace {
   HIPUnifiedSpace(const HIPUnifiedSpace& rhs) = default;
   HIPUnifiedSpace& operator=(HIPUnifiedSpace&& rhs) = default;
   HIPUnifiedSpace& operator=(const HIPUnifiedSpace& rhs) = default;
-  ~HIPUnifiedSpace()                                        = default;
+  ~HIPUnifiedSpace()                                     = default;
 
   /**\brief  Allocate untracked memory in the space */
   void* allocate(const size_t arg_alloc_size) const;
