@@ -303,8 +303,9 @@ void HIPUnifiedSpace::impl_deallocate(
 //----------------------------------------------------------------------------
 bool HIPUnifiedSpace::available() {
   int hasUnifiedMemory = 0;  // false per default
-  hipDeviceGetAttribute(&hasUnifiedMemory, hipDeviceAttributeManagedMemory,
-                        Impl::HIPInternal::singleton().m_hipDev);
+  KOKKOS_IMPL_HIP_SAFE_CALL(
+      hipDeviceGetAttribute(&hasUnifiedMemory, hipDeviceAttributeManagedMemory,
+                            Impl::HIPInternal::singleton().m_hipDev));
   return hasUnifiedMemory;
 }
 
