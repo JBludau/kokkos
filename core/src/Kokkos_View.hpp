@@ -1462,7 +1462,7 @@ class View : public ViewTraits<DataType, Properties...> {
     // the allocation to protect against possible concurrent access
     // on the CPU and the GPU.
     // Fence using the trait's execution space (which will be Kokkos::HIP)
-    // to avoid incomplete type errors from using Kokkos::Cuda directly.
+    // to avoid incomplete type errors from using Kokkos::HIP directly.
     if (std::is_same<Kokkos::Experimental::HIPUnifiedSpace,
                      typename traits::device_type::memory_space>::value) {
       typename traits::device_type::memory_space::execution_space().fence(
