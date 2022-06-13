@@ -1457,7 +1457,7 @@ class View : public ViewTraits<DataType, Properties...> {
           "Kokkos::View<...>::View: fence before allocating UVM");
     }
 #endif
-#if defined(KOKKOS_ENABLE_HIP)
+#if defined KOKKOS_ENABLE_HIP && defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
     // If allocating in HIPUnified must fence before and after
     // the allocation to protect against possible concurrent access
     // on the CPU and the GPU.
@@ -1483,7 +1483,7 @@ class View : public ViewTraits<DataType, Properties...> {
           "Kokkos::View<...>::View: fence after allocating UVM");
     }
 #endif
-#if defined(KOKKOS_ENABLE_HIP)
+#if defined KOKKOS_ENABLE_HIP && defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
     if (std::is_same<Kokkos::Experimental::HIPUnifiedSpace,
                      typename traits::device_type::memory_space>::value) {
       typename traits::device_type::memory_space::execution_space().fence(

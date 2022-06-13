@@ -130,7 +130,9 @@ HIPSpace::HIPSpace() : m_device(HIP().hip_device()) {}
 
 HIPHostPinnedSpace::HIPHostPinnedSpace() {}
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 HIPUnifiedSpace::HIPUnifiedSpace() {}
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 void* HIPSpace::allocate(const size_t arg_alloc_size) const {
   return allocate("[unlabeled]", arg_alloc_size);
@@ -198,6 +200,7 @@ void* HIPHostPinnedSpace::impl_allocate(
   return ptr;
 }
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 void* HIPUnifiedSpace::allocate(const size_t arg_alloc_size) const {
   return allocate("[unlabeled]", arg_alloc_size);
 }
@@ -229,6 +232,7 @@ void* HIPUnifiedSpace::impl_allocate(
 
   return ptr;
 }
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 void HIPSpace::deallocate(void* const arg_alloc_ptr,
                           const size_t arg_alloc_size) const {
@@ -276,6 +280,7 @@ void HIPHostPinnedSpace::impl_deallocate(
   KOKKOS_IMPL_HIP_SAFE_CALL(hipHostFree(arg_alloc_ptr));
 }
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 void HIPUnifiedSpace::deallocate(void* const arg_alloc_ptr,
                                  const size_t arg_alloc_size) const {
   deallocate("[unlabeled]", arg_alloc_ptr, arg_alloc_size);
@@ -299,8 +304,10 @@ void HIPUnifiedSpace::impl_deallocate(
   }
   KOKKOS_IMPL_HIP_SAFE_CALL(hipFree(arg_alloc_ptr));
 }
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 //----------------------------------------------------------------------------
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 bool HIPUnifiedSpace::available() {
   int hasUnifiedMemory = 0;  // false per default
   KOKKOS_IMPL_HIP_SAFE_CALL(
@@ -308,6 +315,7 @@ bool HIPUnifiedSpace::available() {
                             Impl::HIPInternal::singleton().m_hipDev));
   return hasUnifiedMemory;
 }
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 }  // namespace Experimental
 }  // namespace Kokkos
@@ -325,8 +333,10 @@ SharedAllocationRecord<void, void>
 SharedAllocationRecord<void, void> SharedAllocationRecord<
     Kokkos::Experimental::HIPHostPinnedSpace, void>::s_root_record;
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 SharedAllocationRecord<void, void> SharedAllocationRecord<
     Kokkos::Experimental::HIPUnifiedSpace, void>::s_root_record;
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 #endif
 
 SharedAllocationRecord<Kokkos::Experimental::HIPSpace,
@@ -344,12 +354,14 @@ SharedAllocationRecord<Kokkos::Experimental::HIPHostPinnedSpace,
                      SharedAllocationRecord<void, void>::m_alloc_size);
 }
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 SharedAllocationRecord<Kokkos::Experimental::HIPUnifiedSpace,
                        void>::~SharedAllocationRecord() {
   m_space.deallocate(m_label.c_str(),
                      SharedAllocationRecord<void, void>::m_alloc_ptr,
                      SharedAllocationRecord<void, void>::m_alloc_size);
 }
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 SharedAllocationRecord<Kokkos::Experimental::HIPSpace, void>::
     SharedAllocationRecord(
@@ -405,6 +417,7 @@ SharedAllocationRecord<Kokkos::Experimental::HIPHostPinnedSpace, void>::
                                                   arg_label);
 }
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 SharedAllocationRecord<Kokkos::Experimental::HIPUnifiedSpace, void>::
     SharedAllocationRecord(
         const Kokkos::Experimental::HIPUnifiedSpace& arg_space,
@@ -426,6 +439,7 @@ SharedAllocationRecord<Kokkos::Experimental::HIPUnifiedSpace, void>::
   this->base_t::_fill_host_accessible_header_info(*RecordBase::m_alloc_ptr,
                                                   arg_label);
 }
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 }  // namespace Impl
 }  // namespace Kokkos
@@ -590,8 +604,10 @@ template class HostInaccessibleSharedAllocationRecordCommon<
 template class SharedAllocationRecordCommon<Kokkos::Experimental::HIPSpace>;
 template class SharedAllocationRecordCommon<
     Kokkos::Experimental::HIPHostPinnedSpace>;
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 template class SharedAllocationRecordCommon<
     Kokkos::Experimental::HIPUnifiedSpace>;
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 }  // end namespace Impl
 }  // end namespace Kokkos

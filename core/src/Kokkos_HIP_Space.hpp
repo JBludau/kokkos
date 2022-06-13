@@ -212,7 +212,7 @@ struct Impl::is_hip_type_space<Experimental::HIPHostPinnedSpace>
 
 /*--------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------*/
-
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 namespace Kokkos {
 namespace Experimental {
 /** \brief  Memory that is accessible to HIP execution space
@@ -280,6 +280,7 @@ struct Impl::is_hip_type_space<Experimental::HIPUnifiedSpace>
     : public std::true_type {};
 
 }  // namespace Kokkos
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 /*--------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------*/
@@ -310,6 +311,7 @@ struct MemorySpaceAccess<Kokkos::HostSpace,
   enum : bool { deepcopy = true };
 };
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 template <>
 struct MemorySpaceAccess<Kokkos::HostSpace,
                          Kokkos::Experimental::HIPUnifiedSpace> {
@@ -318,6 +320,7 @@ struct MemorySpaceAccess<Kokkos::HostSpace,
   enum : bool { accessible = true };
   enum : bool { deepcopy = true };
 };
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 //----------------------------------------
 
@@ -337,6 +340,7 @@ struct MemorySpaceAccess<Kokkos::Experimental::HIPSpace,
   enum : bool { deepcopy = true };
 };
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 template <>
 struct MemorySpaceAccess<Kokkos::Experimental::HIPSpace,
                          Kokkos::Experimental::HIPUnifiedSpace> {
@@ -345,6 +349,7 @@ struct MemorySpaceAccess<Kokkos::Experimental::HIPSpace,
   enum : bool { accessible = true };
   enum : bool { deepcopy = true };
 };
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 //----------------------------------------
 // HIPHostPinnedSpace::execution_space == HostSpace::execution_space
@@ -366,6 +371,7 @@ struct MemorySpaceAccess<Kokkos::Experimental::HIPHostPinnedSpace,
   enum : bool { deepcopy = true };
 };
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 template <>
 struct MemorySpaceAccess<Kokkos::Experimental::HIPHostPinnedSpace,
                          Kokkos::Experimental::HIPUnifiedSpace> {
@@ -373,11 +379,13 @@ struct MemorySpaceAccess<Kokkos::Experimental::HIPHostPinnedSpace,
   enum : bool { accessible = true };
   enum : bool { deepcopy = true };
 };
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 //----------------------------------------
 // HIPUnifiedSpace::execution_space != HostSpace::execution_space
 // HIPUnifiedSpace accessible to both HIP and Host
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 template <>
 struct MemorySpaceAccess<Kokkos::Experimental::HIPUnifiedSpace,
                          Kokkos::HostSpace> {
@@ -401,6 +409,7 @@ struct MemorySpaceAccess<Kokkos::Experimental::HIPUnifiedSpace,
   enum : bool { accessible = true };
   enum : bool { deepcopy = true };
 };
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
 };  // namespace Impl
 //----------------------------------------
@@ -594,6 +603,7 @@ class SharedAllocationRecord<Kokkos::Experimental::HIPHostPinnedSpace, void>
       const RecordBase::function_type arg_dealloc = &base_t::deallocate);
 };
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 template <>
 class SharedAllocationRecord<Kokkos::Experimental::HIPUnifiedSpace, void>
     : public SharedAllocationRecordCommon<
@@ -623,6 +633,7 @@ class SharedAllocationRecord<Kokkos::Experimental::HIPUnifiedSpace, void>
       const std::string& arg_label, const size_t arg_alloc_size,
       const RecordBase::function_type arg_dealloc = &base_t::deallocate);
 };
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 }  // namespace Impl
 }  // namespace Kokkos
 
