@@ -58,6 +58,7 @@ KOKKOS_ENABLE_OPTION(AGGRESSIVE_VECTORIZATION OFF "Whether to aggressively vecto
 KOKKOS_ENABLE_OPTION(LAUNCH_COMPILER      ON  "Whether to potentially use the launch compiler")
 KOKKOS_ENABLE_OPTION(COMPILE_AS_CMAKE_LANGUAGE OFF "Whether to use native cmake language support")
 KOKKOS_ENABLE_OPTION(HIP_MULTIPLE_KERNEL_INSTANTIATIONS OFF "Whether multiple kernels are instantiated at compile time - improve performance but increase compile time")
+KOKKOS_ENABLE_OPTION(HIP_UNIFIED_MEMORY OFF "Weather the HIPUnified memory space will be available")
 
 # This option will go away eventually, but allows fallback to old implementation when needed.
 KOKKOS_ENABLE_OPTION(IMPL_DESUL_ATOMICS   ON  "Whether to use desul based atomics - option only during beta")
@@ -116,7 +117,7 @@ FUNCTION(check_device_specific_options)
 ENDFUNCTION()
 
 CHECK_DEVICE_SPECIFIC_OPTIONS(DEVICE CUDA OPTIONS CUDA_UVM CUDA_RELOCATABLE_DEVICE_CODE CUDA_LAMBDA CUDA_CONSTEXPR CUDA_LDG_INTRINSIC)
-CHECK_DEVICE_SPECIFIC_OPTIONS(DEVICE HIP OPTIONS HIP_RELOCATABLE_DEVICE_CODE)
+CHECK_DEVICE_SPECIFIC_OPTIONS(DEVICE HIP OPTIONS HIP_RELOCATABLE_DEVICE_CODE HIP_UNIFIED_MEMORY)
 CHECK_DEVICE_SPECIFIC_OPTIONS(DEVICE HPX OPTIONS HPX_ASYNC_DISPATCH)
 
 # Needed due to change from deprecated name to new header define name
