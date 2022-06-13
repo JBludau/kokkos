@@ -75,6 +75,7 @@ TEST(hip, space_access) {
           Kokkos::HostSpace, Kokkos::Experimental::HIPSpace>::accessible,
       "");
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(
       !Kokkos::Impl::MemorySpaceAccess<
           Kokkos::HostSpace, Kokkos::Experimental::HIPUnifiedSpace>::assignable,
@@ -84,6 +85,7 @@ TEST(hip, space_access) {
       Kokkos::Impl::MemorySpaceAccess<
           Kokkos::HostSpace, Kokkos::Experimental::HIPUnifiedSpace>::accessible,
       "");
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
   //--------------------------------------
 
@@ -110,6 +112,7 @@ TEST(hip, space_access) {
                                                  Kokkos::HostSpace>::accessible,
                 "");
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(Kokkos::Impl::MemorySpaceAccess<
                     Kokkos::Experimental::HIPSpace,
                     Kokkos::Experimental::HIPUnifiedSpace>::assignable,
@@ -119,6 +122,7 @@ TEST(hip, space_access) {
                     Kokkos::Experimental::HIPSpace,
                     Kokkos::Experimental::HIPUnifiedSpace>::accessible,
                 "");
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
   //--------------------------------------
 
@@ -147,6 +151,7 @@ TEST(hip, space_access) {
                     Kokkos::Experimental::HIPSpace>::accessible,
                 "");
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(!Kokkos::Impl::MemorySpaceAccess<
                     Kokkos::Experimental::HIPHostPinnedSpace,
                     Kokkos::Experimental::HIPUnifiedSpace>::assignable,
@@ -156,9 +161,11 @@ TEST(hip, space_access) {
                     Kokkos::Experimental::HIPHostPinnedSpace,
                     Kokkos::Experimental::HIPUnifiedSpace>::accessible,
                 "");
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
   //--------------------------------------
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(Kokkos::Impl::MemorySpaceAccess<
                     Kokkos::Experimental::HIPUnifiedSpace,
                     Kokkos::Experimental::HIPUnifiedSpace>::assignable,
@@ -193,6 +200,7 @@ TEST(hip, space_access) {
                     Kokkos::Experimental::HIPUnifiedSpace,
                     Kokkos::Experimental::HIPHostPinnedSpace>::accessible,
                 "");
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
   //--------------------------------------
 
@@ -210,10 +218,12 @@ TEST(hip, space_access) {
                     Kokkos::Experimental::HIPHostPinnedSpace>::accessible,
                 "");
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(Kokkos::SpaceAccessibility<
                     Kokkos::Experimental::HIP,
                     Kokkos::Experimental::HIPUnifiedSpace>::accessible,
                 "");
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
   static_assert(
       !Kokkos::SpaceAccessibility<Kokkos::HostSpace,
@@ -225,10 +235,12 @@ TEST(hip, space_access) {
                     Kokkos::Experimental::HIPHostPinnedSpace>::accessible,
                 "");
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(
       Kokkos::SpaceAccessibility<
           Kokkos::HostSpace, Kokkos::Experimental::HIPUnifiedSpace>::accessible,
       "");
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
   static_assert(
       std::is_same<
@@ -242,6 +254,7 @@ TEST(hip, space_access) {
                    Kokkos::Experimental::HIPHostPinnedSpace>::value,
       "");
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(
       std::is_same<
           Kokkos::Impl::HostMirror<
@@ -249,6 +262,7 @@ TEST(hip, space_access) {
           Kokkos::Device<Kokkos::HostSpace::execution_space,
                          Kokkos::Experimental::HIPUnifiedSpace>>::value,
       "");
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 
   static_assert(Kokkos::SpaceAccessibility<
                     Kokkos::Impl::HostMirror<Kokkos::Experimental::HIP>::Space,
@@ -261,6 +275,7 @@ TEST(hip, space_access) {
           Kokkos::HostSpace>::accessible,
       "");
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(Kokkos::SpaceAccessibility<
                     Kokkos::Impl::HostMirror<
                         Kokkos::Experimental::HIPHostPinnedSpace>::Space,
@@ -272,6 +287,7 @@ TEST(hip, space_access) {
                         Kokkos::Experimental::HIPUnifiedSpace>::Space,
                     Kokkos::HostSpace>::accessible,
                 "");
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 }
 
 template <class MemSpace, class ExecSpace>
@@ -319,10 +335,12 @@ TEST(hip, impl_view_accessible) {
   TestViewHIPAccessible<Kokkos::Experimental::HIPHostPinnedSpace,
                         Kokkos::HostSpace::execution_space>::run();
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   TestViewHIPAccessible<Kokkos::Experimental::HIPUnifiedSpace,
                         Kokkos::HostSpace::execution_space>::run();
   TestViewHIPAccessible<Kokkos::Experimental::HIPUnifiedSpace,
                         Kokkos::Experimental::HIP>::run();
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
 }
 
 }  // namespace Test

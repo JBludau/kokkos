@@ -281,9 +281,11 @@ TEST(TEST_CATEGORY, host_shared_ptr_tracking) {
     host_shared_ptr_test_reference_counting<
         Kokkos::Experimental::HIPHostPinnedSpace,
         Kokkos::Experimental::HIPHostPinnedSpace>();
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
     host_shared_ptr_test_reference_counting<
         Kokkos::Experimental::HIPUnifiedSpace,
         Kokkos::Experimental::HIPUnifiedSpace>();
+#endif  // KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   }
 #endif
 }
