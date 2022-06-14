@@ -275,13 +275,13 @@ TEST(hip, space_access) {
           Kokkos::HostSpace>::accessible,
       "");
 
-#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(Kokkos::SpaceAccessibility<
                     Kokkos::Impl::HostMirror<
                         Kokkos::Experimental::HIPHostPinnedSpace>::Space,
                     Kokkos::HostSpace>::accessible,
                 "");
 
+#if defined KOKKOS_ENABLE_HIP_UNIFIED_MEMORY
   static_assert(Kokkos::SpaceAccessibility<
                     Kokkos::Impl::HostMirror<
                         Kokkos::Experimental::HIPUnifiedSpace>::Space,
