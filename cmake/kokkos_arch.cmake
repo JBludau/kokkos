@@ -747,6 +747,34 @@ IF(KOKKOS_ENABLE_CUDA AND NOT CUDA_ARCH_ALREADY_SPECIFIED)
   ENDIF()
 ENDIF()
 
+
+IF(KOKKOS_ENABLE_HIP AND KOKKOS_ENABLE_HIP_UNIFIED_MEMORY AND KOKKOS_ENABLE_HIP_UNIFIED_MEMORY_CHECK)
+  # Check if Unified Memory is available on the current gpu (0)
+  SET(_BINARY_TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/cmake/compile_tests/HIPUnifiedMemoryTestWorkdir)
+  FILE(REMOVE_RECURSE ${_BINARY_TEST_DIR})
+  FILE(MAKE_DIRECTORY ${_BINARY_TEST_DIR})
+
+  TRY_RUN(
+    _HIP_UNIFIED_MEMORY_CHECK_RESULT
+    _HIP_UNIFIED_MEMORY_CHECK_COMPILE_RESULT
+    ${_BINARY_TEST_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/compile_tests/hip_unified_available.cpp
+    )
+
+  IF(NOT _HIP_UNIFIED_MEMORY_CHECK_COMPILE_RESULT)
+    MESSAGE(FATAL_ERROR "HIP driver check for unified memory was not able to compile with ${CMAKE_CXX_COMPILER}. HIPUnified can only be enabled if the query can be compiled")
+  ENDIF()
+  IF(_HIP_UNIFIED_MEMORY_CHECK_RESULT EQUAL 0)
+    MESSAGE(STATUS "HIP Driver check reported unified memory as available")
+  ELSE()
+    IF(_HIP_UNIFIED_MEMORY_CHECK_RESULT EQUAL -1)
+      MESSAGE(FATAL_ERROR "HIP driver check reported unified memory as unavailable")
+    ELSE()
+      MESSAGE(FATAL_ERROR "HIP driver check for unified memory could not be run successfully")
+    ENDIF()
+  ENDIF()
+ENDIF()
+
 #Regardless of version, make sure we define the general architecture name
 IF (KOKKOS_ARCH_KEPLER30 OR KOKKOS_ARCH_KEPLER32 OR KOKKOS_ARCH_KEPLER35 OR KOKKOS_ARCH_KEPLER37)
   SET(KOKKOS_ARCH_KEPLER ON)
