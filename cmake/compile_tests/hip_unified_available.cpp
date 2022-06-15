@@ -52,12 +52,14 @@ int main() {
                                            hipDeviceAttributeManagedMemory, 0);
 
   if (error != hipSuccess) {
-    std::cout << "HIP error: " << hipGetErrorString(error) << "\n";
+    std::cout << "HIP error: " << hipGetErrorString(error)
+              << " occurred during the check for unified memory\n";
     return error;
   }
   if (!static_cast<bool>(hasUnifiedMemory)) {
-    std::cout << "The combination of device and os does not support the "
-                 "HIPUnified memory space \n";
+    std::cout << "The combination of device and system configuration does not "
+                 "support the HIPUnified memory space.\n Please refer to the "
+                 "Rocm documentation on unified memory\n";
     return -1;  // all hipError_t are int >= 0, therefore negative returns are
                 // used to differentiate from the hipError_t
   } else {

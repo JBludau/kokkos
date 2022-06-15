@@ -748,7 +748,7 @@ IF(KOKKOS_ENABLE_CUDA AND NOT CUDA_ARCH_ALREADY_SPECIFIED)
 ENDIF()
 
 
-IF(KOKKOS_ENABLE_HIP AND KOKKOS_ENABLE_HIP_UNIFIED_MEMORY AND KOKKOS_ENABLE_HIP_UNIFIED_MEMORY_CHECK)
+IF(KOKKOS_ENABLE_HIP_UNIFIED_MEMORY)
   # Check if Unified Memory is available on the current gpu (0)
   SET(_BINARY_TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/cmake/compile_tests/HIPUnifiedMemoryTestWorkdir)
   FILE(REMOVE_RECURSE ${_BINARY_TEST_DIR})
@@ -759,18 +759,22 @@ IF(KOKKOS_ENABLE_HIP AND KOKKOS_ENABLE_HIP_UNIFIED_MEMORY AND KOKKOS_ENABLE_HIP_
     _HIP_UNIFIED_MEMORY_CHECK_COMPILE_RESULT
     ${_BINARY_TEST_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/compile_tests/hip_unified_available.cpp
+    RUN_OUTPUT_VARIABLE _HIP_UNIFIED_MEMORY_CHECK_OUTPUT
     )
 
   IF(NOT _HIP_UNIFIED_MEMORY_CHECK_COMPILE_RESULT)
-    MESSAGE(FATAL_ERROR "HIP driver check for unified memory was not able to compile with ${CMAKE_CXX_COMPILER}. HIPUnified can only be enabled if the query can be compiled")
+    MESSAGE(FATAL_ERROR "HIP driver check for unified memory was not able to compile with ${CMAKE_CXX_COMPILER}. HIPUnified can only be enabled if the check can be compiled")
   ENDIF()
-  IF(_HIP_UNIFIED_MEMORY_CHECK_RESULT EQUAL 0)
-    MESSAGE(STATUS "HIP Driver check reported unified memory as available")
-  ELSE()
-    IF(_HIP_UNIFIED_MEMORY_CHECK_RESULT EQUAL -1)
-      MESSAGE(FATAL_ERROR "HIP driver check reported unified memory as unavailable")
+
+  IF(KOKKOS_ENABLE_HIP_UNIFIED_MEMORY_CHECK)
+    IF(_HIP_UNIFIED_MEMORY_CHECK_RESULT EQUAL 0)
+      MESSAGE(STATUS "HIP driver check reported unified memory as available")
     ELSE()
-      MESSAGE(FATAL_ERROR "HIP driver check for unified memory could not be run successfully")
+      IF(_HIP_UNIFIED_MEMORY_CHECK_RESULT EQUAL -1)
+        MESSAGE(FATAL_ERROR "HIP driver check reported unified memory as unavailable\n" ${_HIP_UNIFIED_MEMORY_CHECK_OUTPUT})
+      ELSE()
+        MESSAGE(FATAL_ERROR "HIP driver check for unified memory could not be run successfully\n" ${_HIP_UNIFIED_MEMORY_CHECK_OUTPUT})
+      ENDIF()
     ENDIF()
   ENDIF()
 ENDIF()
