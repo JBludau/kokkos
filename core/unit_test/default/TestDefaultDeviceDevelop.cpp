@@ -47,10 +47,10 @@
 
 #include <Kokkos_Core.hpp>
 
-#include <TestDefaultDeviceType_Category.hpp>
+#include "hip/TestHIP_Memory_Fallback.cpp"
 
-namespace Test {
+// namespace Test {
 
-TEST(defaultdevicetype, development_test) {}
+// TEST(defaultdevicetype, development_test) {}
 
-}  // namespace Test
+// }  // namespace Test
