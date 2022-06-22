@@ -47,16 +47,6 @@
 
 namespace Test {
 
-template <typename T>
-__global__ void vectorADD(const T* A_d, const T* B_d, T* C_d, size_t NELEM) {
-  size_t offset = (blockIdx.x * blockDim.x + threadIdx.x);
-  size_t stride = blockDim.x * gridDim.x;
-
-  for (size_t i = offset; i < NELEM; i += stride) {
-    C_d[i] = A_d[i] + B_d[i];
-  }
-}
-
 std::ostream& operator<<(std::ostream& os, hipPointerAttribute_t const attr) {
   os << "hipPointerAttribute: \n";
   os << "hipMemoryType: " << attr.memoryType << "\n";
@@ -97,7 +87,19 @@ template <typename T>
 void printMemoryInformation(hipError_t alloc(void**, size_t, unsigned int),
                             unsigned int size) {
   T* ptr = nullptr;
-  KOKKOS_IMPL_HIP_SAFE_CALL(alloc((void**)(&ptr), size, hipMemAttachGlobal));
+  int* memInfo = new int[size];
+  KOKKOS_IMPL_HIP_SAFE_CALL(
+      alloc((void**)(&ptr), size * sizeof(T), hipMemAttachGlobal));
+  KOKKOS_IMPL_HIP_SAFE_CALL(hipMemRangeGetAttribute(
+      memInfo, size * sizeof(int), hipMemRangeAttributeCoherencyMode, ptr,
+      size * sizeof(T)));
+  std::cout << "MemRangeAttribute pre memadvise " << *memInfo << "\n";
+  KOKKOS_IMPL_HIP_SAFE_CALL(
+      hipMemAdvise(ptr, size * sizeof(T), hipMemAdviseSetCoarseGrain, 0));
+  KOKKOS_IMPL_HIP_SAFE_CALL(hipMemRangeGetAttribute(
+      memInfo, size * sizeof(int), hipMemRangeAttributeCoherencyMode, ptr,
+      size * sizeof(T)));
+  std::cout << "MemRangeAttribute post memadvise" << *memInfo << "\n";
   hipPointerAttribute_t attr;
   KOKKOS_IMPL_HIP_SAFE_CALL(hipPointerGetAttributes(&attr, ptr));
   std::cout << attr << std::endl;
@@ -110,73 +112,9 @@ void printMemoryInformation(hipError_t alloc(void**, size_t, unsigned int),
 
 int N = 64 * 1024 * 1024;
 TEST(hip, memory_fallback) {
-  printDeviceInfo(0);
-  printMemoryInformation<double>(hipMallocManaged, 10);
-  printMemoryInformation<double>(hipHostMalloc, 10);
-  int numElements = (N < (64 * 1024 * 1024)) ? 64 * 1024 * 1024 : N;
-  float *A, *B, *C;
-
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipMallocManaged(&A, numElements * sizeof(float)));
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipMallocManaged(&B, numElements * sizeof(float)));
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipMallocManaged(&C, numElements * sizeof(float)));
-
-  hipDevice_t device = hipCpuDeviceId;
-
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipMemAdvise(A, numElements * sizeof(float),
-                                         hipMemAdviseSetReadMostly, device));
-  KOKKOS_IMPL_HIP_SAFE_CALL(
-      hipMemPrefetchAsync(A, numElements * sizeof(float), 0));
-  KOKKOS_IMPL_HIP_SAFE_CALL(
-      hipMemPrefetchAsync(B, numElements * sizeof(float), 0));
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipDeviceSynchronize());
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipMemRangeGetAttribute(
-      &device, sizeof(device), hipMemRangeAttributeLastPrefetchLocation, A,
-      numElements * sizeof(float)));
-  if (device != 0) {
-    std::cout << "hipMemRangeGetAttribute error, device = " << device << "\n";
-  }
-  uint32_t read_only = 0xf;
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipMemRangeGetAttribute(
-      &read_only, sizeof(read_only), hipMemRangeAttributeReadMostly, A,
-      numElements * sizeof(float)));
-  if (read_only != 1) {
-    std::cout << "hipMemRangeGetAttribute error, read_only = " << read_only
-              << "\n";
-  }
-
-  unsigned blocks = numElements;
-
-  hipEvent_t event0, event1;
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipEventCreate(&event0));
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipEventCreate(&event1));
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipEventRecord(event0, 0));
-  hipLaunchKernelGGL(vectorADD, dim3(blocks), dim3(1), 0, 0,
-                     static_cast<const float*>(A), static_cast<const float*>(B),
-                     C, numElements);
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipEventRecord(event1, 0));
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipDeviceSynchronize());
-  float time = 0.0f;
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipEventElapsedTime(&time, event0, event1));
-  printf("Time %.3f ms\n", time);
-  float maxError = 0.0f;
-  KOKKOS_IMPL_HIP_SAFE_CALL(
-      hipMemPrefetchAsync(B, numElements * sizeof(float), hipCpuDeviceId));
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipDeviceSynchronize());
-  device = 0;
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipMemRangeGetAttribute(
-      &device, sizeof(device), hipMemRangeAttributeLastPrefetchLocation, A,
-      numElements * sizeof(float)));
-  if (device != hipCpuDeviceId) {
-    std::cout << "hipMemRangeGetAttribute error device = " << device << "\n";
-  }
-
-  for (int i = 0; i < numElements; i++) {
-    maxError = fmax(maxError, fabs(B[i] - 3.0f));
-  }
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipFree(A));
-  KOKKOS_IMPL_HIP_SAFE_CALL(hipFree(B));
-  std::cout << "maxError: " << maxError << std::endl;
-  ;
+  // printDeviceInfo(0);
+  printMemoryInformation<double>(hipMallocManaged, 1);
+  printMemoryInformation<double>(hipHostMalloc, 1);
 }
 
 }  // namespace Test
