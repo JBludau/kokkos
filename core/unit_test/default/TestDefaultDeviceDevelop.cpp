@@ -48,9 +48,3 @@
 #include <Kokkos_Core.hpp>
 
 #include "hip/TestHIP_Memory_Fallback.cpp"
-
-// namespace Test {
-
-// TEST(defaultdevicetype, development_test) {}
-
-// }  // namespace Test
