@@ -47,4 +47,5 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "hip/TestHIP_Memory_Fallback.cpp"
+// #include "hip/TestHIP_Memory_Fallback.cpp"
+#include "hip/TestHIP_Memory_Requirements.cpp"
