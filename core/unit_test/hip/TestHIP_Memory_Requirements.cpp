@@ -63,6 +63,11 @@ hipMemRangeCoherencyMode checkMemoryGrainedness(
   KOKKOS_IMPL_HIP_SAFE_CALL(hipMemRangeGetAttribute(
       &memInfo, 1 * sizeof(hipMemRangeCoherencyMode),
       hipMemRangeAttributeCoherencyMode, ptr, 1 * sizeof(T)));
+
+  if (memAdviseCoarseGrain) {
+    KOKKOS_IMPL_HIP_SAFE_CALL(
+        hipMemAdvise(ptr, 1 * sizeof(T), hipMemAdviseUnsetCoarseGrain, 0));
+  }
   KOKKOS_IMPL_HIP_SAFE_CALL(hipFree(ptr));
   return memInfo;
 }
@@ -70,8 +75,6 @@ hipMemRangeCoherencyMode checkMemoryGrainedness(
 TEST(hip, memory_requirements) {
   ASSERT_TRUE(hipMemRangeCoherencyModeCoarseGrain ==
               checkMemoryGrainedness<int>(hipHostMalloc, false));
-  ASSERT_FALSE(hipMemRangeCoherencyModeCoarseGrain ==
-               checkMemoryGrainedness<int>(hipMallocManaged, false));
   ASSERT_TRUE(hipMemRangeCoherencyModeCoarseGrain ==
               checkMemoryGrainedness<int>(hipMallocManaged, true));
 }
