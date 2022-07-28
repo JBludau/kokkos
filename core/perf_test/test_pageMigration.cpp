@@ -55,19 +55,26 @@ unsigned getBytesPerPage() {
 unsigned getBytesPerPage() { return sysconf(_SC_PAGESIZE); }
 #endif
 
+#include <algorithm>
 #include <iostream>
 
 #include <Kokkos_Core.hpp>
 
-using DeviceExecSpace = Kokkos::Experimental::HIP;
-using HostExecSpace   = Kokkos::Serial;
+#if defined KOKKOS_ENABLE_SERIAL
+using HostExecSpace = Kokkos::Serial;
+#elif defined KOKKOS_ENABLE_OPENMP
+using HostExecSpace            = Kokkos::OpenMP;
+#endif
 
-#if defined KOKKOS_ENABLE_HIP
-using PageMigratingMemorySpace = Kokkos::Experimental::HIPManagedSpace;
-#elif defined KOKKOS_ENABLE_CUDA
+#if defined KOKKOS_ENABLE_CUDA
 using PageMigratingMemorySpace = Kokkos::CudaUVMSpace;
+using DeviceExecSpace          = Kokkos::Cuda;
+#elif defined KOKKOS_ENABLE_HIP
+using PageMigratingMemorySpace = Kokkos::Experimental::HIPManagedSpace;
+using DeviceExecSpace          = Kokkos::Experimental::HIP;
 #elif defined KOKKOS_ENABLE_SYCL
 using PageMigratingMemorySpace = Kokkos::Experimental::SyclSharedUSMSpace;
+using DeviceExecSpace          = Kokkos::Experimental::Sycl;
 #endif
 
 void printTimings(std::ostream& out, std::vector<double> tr) {
@@ -76,6 +83,15 @@ void printTimings(std::ostream& out, std::vector<double> tr) {
     out << "Duration of loop " << it - tr.begin() << " is " << *it
         << " seconds\n";
   }
+}
+
+template <typename T>
+T computeMean(std::vector<T> results) {
+  T res{};
+  for (auto it = results.begin(); it != results.end(); ++it) {
+    res += *it;
+  }
+  return res / results.size();
 }
 
 template <typename ExecSpace, typename ViewType>
@@ -87,8 +103,10 @@ std::vector<decltype(std::declval<Kokkos::Timer>().seconds())> incrementInLoop(
   for (unsigned i = 0; i < loopCount; ++i) {
     auto start = timer.seconds();
     Kokkos::parallel_for(
-        "increment", Kokkos::RangePolicy<ExecSpace>(0, view.size()),
-        KOKKOS_LAMBDA(const int& i) { ++view(i); });
+        "increment",
+        Kokkos::RangePolicy<ExecSpace>{0,
+                                       static_cast<unsigned int>(view.size())},
+        KOKKOS_LAMBDA(const int64_t& i) { ++view(i); });
     Kokkos::fence();
     auto end = timer.seconds();
     results.push_back(end - start);
@@ -96,9 +114,9 @@ std::vector<decltype(std::declval<Kokkos::Timer>().seconds())> incrementInLoop(
   return results;
 }
 
-size_t getDeviceMemory() {
+size_t getDeviceMemorySize() {
 #if defined KOKKOS_ENABLE_CUDA
-  return Kokkos::Cuda::cuda_device_prop().totalGlobalMem;
+  return Kokkos::Cuda{}.cuda_device_prop().totalGlobalMem;
 #elif defined KOKKOS_ENABLE_HIP
   return Kokkos::Experimental::HIP::hip_device_prop().totalGlobalMem;
 #else
@@ -110,29 +128,120 @@ size_t getDeviceMemory() {
 int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
   {
-    double memoryFraction = 0.5;
-    size_t noBytes        = memoryFraction * getDeviceMemory();
-    unsigned int noPages  = noBytes / getBytesPerPage();
-    std::cout << "Page size as reported by os: " << getBytesPerPage()
-              << " bytes \n";
-    std::cout << "Allocating " << noPages
-              << " pages of memory in pageMigratingMemorySpace.\n"
-              << "This corresponds to " << memoryFraction * 100
-              << " % of the device memory.\n";
+    const unsigned int noRepetitions      = 10;
+    const unsigned int noDeviceHostCycles = 3;
+    double fractionOfDeviceMemory         = 0.4;
+    double threshold                      = 2.0;
+    size_t noBytes       = fractionOfDeviceMemory * getDeviceMemorySize();
+    unsigned int noPages = noBytes / getBytesPerPage();
 
+    // ALLOCATION
     Kokkos::View<int*, PageMigratingMemorySpace> migratableData(
         "migratableData", noPages * getBytesPerPage() / sizeof(int));
     Kokkos::View<int*, DeviceExecSpace::memory_space> deviceData(
-        "migratableData", 0.5 * noPages * getBytesPerPage() / sizeof(int));
+        "deviceData", noPages * getBytesPerPage() / sizeof(int));
+    Kokkos::View<int*, HostExecSpace::memory_space> hostData(
+        "hostData", noPages * getBytesPerPage() / sizeof(int));
+    Kokkos::fence();
 
-    incrementInLoop<DeviceExecSpace>(deviceData, 10);  // warming up gpu
-    for (unsigned i = 0; i < 3; ++i) {
-      auto deviceResults = incrementInLoop<DeviceExecSpace>(migratableData, 10);
-      std::cout << "device run " << i << ":\n";
-      printTimings(std::cout, deviceResults);
-      auto hostResults = incrementInLoop<HostExecSpace>(migratableData, 10);
-      std::cout << "host run " << i << ":\n";
-      printTimings(std::cout, hostResults);
+    // WARMUP GPU
+    incrementInLoop<DeviceExecSpace>(deviceData,
+                                     noRepetitions);  // warming up gpu
+
+    // GET DEVICE LOCAL TIMINGS
+    auto deviceLocalResults =
+        incrementInLoop<DeviceExecSpace>(deviceData, 10 * noRepetitions);
+
+    // WARMUP HOST
+    incrementInLoop<HostExecSpace>(hostData,
+                                   10 * noRepetitions);  // warming up host
+    // GET HOST LOCAL TIMINGS
+    auto hostLocalResults =
+        incrementInLoop<HostExecSpace>(hostData, noRepetitions);
+
+    // GET PAGE MIGRATING TIMINGS DATA
+    std::vector<decltype(deviceLocalResults)> deviceResults{};
+    std::vector<decltype(hostLocalResults)> hostResults{};
+    for (unsigned i = 0; i < noDeviceHostCycles; ++i) {
+      // WARMUP GPU
+      incrementInLoop<DeviceExecSpace>(deviceData,
+                                       10 * noRepetitions);  // warming up gpu
+      // GET RESULTS DEVICE
+      deviceResults.push_back(
+          incrementInLoop<DeviceExecSpace>(migratableData, noRepetitions));
+
+      // WARMUP HOST
+      incrementInLoop<HostExecSpace>(hostData,
+                                     10 * noRepetitions);  // warming up host
+      // GET RESULTS HOST
+      hostResults.push_back(
+          incrementInLoop<HostExecSpace>(migratableData, noRepetitions));
+    }
+
+    // COMPUTE STATISTICS OF HOST AND DEVICE LOCAL KERNELS
+    auto hostLocalMean   = computeMean(hostLocalResults);
+    auto deviceLocalMean = computeMean(deviceLocalResults);
+
+    // ASSESS PAGE MIGRATIONS
+    bool initialPlacementOnDevice   = false;
+    bool migratesOnEverySpaceAccess = true;
+    bool migratesOnlyOncePerAccess  = true;
+
+    for (unsigned cycle = 0; cycle < noDeviceHostCycles; ++cycle) {
+      unsigned int indicatedPageMigrationsDevice = std::count_if(
+          deviceResults[cycle].begin(), deviceResults[cycle].end(),
+          [&](auto const& val) { return val > (threshold * deviceLocalMean); });
+
+      if (cycle == 0 && indicatedPageMigrationsDevice == 0)
+        initialPlacementOnDevice = true;
+      else {
+        if (indicatedPageMigrationsDevice != 1)
+          migratesOnlyOncePerAccess = false;
+      }
+
+      unsigned int indicatedPageMigrationsHost = std::count_if(
+          hostResults[cycle].begin(), hostResults[cycle].end(),
+          [&](auto const& val) { return val > (threshold * hostLocalMean); });
+
+      if (indicatedPageMigrationsHost != 1) migratesOnlyOncePerAccess = false;
+
+      if (cycle != 0 && indicatedPageMigrationsDevice != 1 &&
+          indicatedPageMigrationsHost != 1)
+        migratesOnEverySpaceAccess = false;
+    }
+
+    // CHECK IF PASSED
+    bool passed = (initialPlacementOnDevice && migratesOnEverySpaceAccess &&
+                   migratesOnlyOncePerAccess);
+
+    // PRINT IF NOT PASSED
+    if (!passed) {
+      std::cout << "Page size as reported by os: " << getBytesPerPage()
+                << " bytes \n";
+      std::cout << "Allocating " << noPages
+                << " pages of memory in pageMigratingMemorySpace.\n"
+                << "This corresponds to " << fractionOfDeviceMemory * 100
+                << " % of the device memory.\n";
+
+      std::cout << "Behavior found: /n";
+      std::cout << "Initial placement on device is " << initialPlacementOnDevice
+                << " we expect true /n";
+      std::cout << "Memory migrates on every space access is "
+                << migratesOnEverySpaceAccess << " we expect true /n;"
+                << "Memory migrates only once per access "
+                << migratesOnlyOncePerAccess << " we expect true /n;";
+
+      std::cout << "Please look at the following timings. A migration was "
+                   "marked detected if the time was larger than "
+                << threshold * hostLocalMean << " for the host and "
+                << threshold * deviceLocalMean << " for the device /n/n";
+
+      for (unsigned cycle = 0; cycle < noDeviceHostCycles; ++cycle) {
+        std::cout << "device timings of run " << cycle << ":\n";
+        printTimings(std::cout, deviceResults[cycle]);
+        std::cout << "host timings of run " << cycle << ":\n";
+        printTimings(std::cout, hostResults[cycle]);
+      }
     }
   }
   Kokkos::finalize();
