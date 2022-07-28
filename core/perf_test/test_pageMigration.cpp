@@ -223,18 +223,18 @@ int main(int argc, char* argv[]) {
                 << "This corresponds to " << fractionOfDeviceMemory * 100
                 << " % of the device memory.\n";
 
-      std::cout << "Behavior found: /n";
+      std::cout << "Behavior found: \n";
       std::cout << "Initial placement on device is " << initialPlacementOnDevice
-                << " we expect true /n";
+                << " we expect true \n";
       std::cout << "Memory migrates on every space access is "
-                << migratesOnEverySpaceAccess << " we expect true /n;"
+                << migratesOnEverySpaceAccess << " we expect true \n;"
                 << "Memory migrates only once per access "
-                << migratesOnlyOncePerAccess << " we expect true /n;";
+                << migratesOnlyOncePerAccess << " we expect true \n;";
 
       std::cout << "Please look at the following timings. A migration was "
                    "marked detected if the time was larger than "
                 << threshold * hostLocalMean << " for the host and "
-                << threshold * deviceLocalMean << " for the device /n/n";
+                << threshold * deviceLocalMean << " for the device \n\n";
 
       for (unsigned cycle = 0; cycle < noDeviceHostCycles; ++cycle) {
         std::cout << "device timings of run " << cycle << ":\n";
