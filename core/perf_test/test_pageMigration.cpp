@@ -221,15 +221,15 @@ int main(int argc, char* argv[]) {
       std::cout << "Allocating " << noPages
                 << " pages of memory in pageMigratingMemorySpace.\n"
                 << "This corresponds to " << fractionOfDeviceMemory * 100
-                << " % of the device memory.\n";
+                << " % of the device memory.\n\n";
 
       std::cout << "Behavior found: \n";
       std::cout << "Initial placement on device is " << initialPlacementOnDevice
                 << " we expect true \n";
       std::cout << "Memory migrates on every space access is "
-                << migratesOnEverySpaceAccess << " we expect true \n;"
-                << "Memory migrates only once per access "
-                << migratesOnlyOncePerAccess << " we expect true \n;";
+                << migratesOnEverySpaceAccess << " we expect true \n";
+      std::cout << "Memory migrates only once per access "
+                << migratesOnlyOncePerAccess << " we expect true \n\n";
 
       std::cout << "Please look at the following timings. A migration was "
                    "marked detected if the time was larger than "
