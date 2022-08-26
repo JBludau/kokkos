@@ -1770,13 +1770,19 @@ void apply_to_view_of_static_rank(Function&& f, View<Args...> a) {
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
-#if defined KOKKOS_ENABLE_DEPRECATED_CODE_4
+namespace Impl {
 template <class V, class... Args>
-using Subview KOKKOS_DEPRECATED =
+using Subview =
     typename Kokkos::Impl::ViewMapping<void /* deduce subview type from source
                                                view traits */
                                        ,
                                        typename V::traits, Args...>::type;
+}  // namespace Impl
+
+#if defined KOKKOS_ENABLE_DEPRECATED_CODE_4
+template <class V, class... Args>
+using Subview KOKKOS_DEPRECATED_WITH_COMMENT(
+    "Please use decltype(subview(...)) instead") = Impl::Subview<V, Args...>;
 #endif
 
 template <class D, class... P, class... Args>
