@@ -46,11 +46,12 @@
 #include <gtest/gtest.h>
 
 #include <Kokkos_Core.hpp>
+#include <TestViewMapping_subview.hpp>
 
-#include <TestDefaultDeviceType_Category.hpp>
+// #include <TestDefaultDeviceType_Category.hpp>
 
-namespace Test {
+// namespace Test {
 
-TEST(defaultdevicetype, development_test) {}
+// TEST(defaultdevicetype, development_test) {}
 
-}  // namespace Test
+// }  // namespace Test

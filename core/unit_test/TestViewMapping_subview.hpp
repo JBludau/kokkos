@@ -46,6 +46,7 @@
 
 #include <sstream>
 #include <iostream>
+#include <type_traits>
 
 #include <Kokkos_Core.hpp>
 
@@ -61,24 +62,30 @@ struct TestViewMappingSubview {
   enum { AN = 10 };
   using AT  = Kokkos::View<int*, ExecSpace>;
   using ACT = Kokkos::View<const int*, ExecSpace>;
-  using AS  = Kokkos::Subview<AT, range>;
+  using AS  = std::invoke_result_t<Kokkos::subview, AT, ACT>;
 
   enum { BN0 = 10, BN1 = 11, BN2 = 12 };
   using BT = Kokkos::View<int***, ExecSpace>;
-  using BS = Kokkos::Subview<BT, range, range, range>;
+  using BS =
+      decltype(Kokkos::subview(std::declval<BT>(), std::declval<range>(),
+                               std::declval<range>(), std::declval<range>()));
 
   enum { CN0 = 10, CN1 = 11, CN2 = 12 };
   using CT = Kokkos::View<int** * [13][14], ExecSpace>;
   // changing CS to CTS here because when compiling with nvshmem, there is a
   // define for CS that makes this fail...
-  using CTS = Kokkos::Subview<CT, range, range, range, int, int>;
+  using CTS = decltype(Kokkos::subview(
+      std::declval<CT>(), std::declval<range>(), std::declval<range>(),
+      std::declval<range>(), int{}, int{}));
 
   enum { DN0 = 10, DN1 = 11, DN2 = 12, DN3 = 13, DN4 = 14 };
   using DT = Kokkos::View<int** * [DN3][DN4], ExecSpace>;
-  using DS = Kokkos::Subview<DT, int, range, range, range, int>;
+  using DS = decltype(
+      Kokkos::subview(std::declval<DT>(), int{}, std::declval<range>(),
+                      std::declval<range>(), std::declval<range>(), int{}));
 
   using DLT  = Kokkos::View<int** * [13][14], Kokkos::LayoutLeft, ExecSpace>;
-  using DLS1 = Kokkos::Subview<DLT, range, int, int, int, int>;
+  using DLS1 = decltype(Kokkos::subview(std::declval<DLT>(),std::declval<range>())<DLT, range, int, int, int, int>;
 
 #if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 1000
   static_assert(
