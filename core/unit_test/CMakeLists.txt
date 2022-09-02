@@ -329,6 +329,33 @@ foreach(PairDeviceSpace HIP-HostPinned;HIP-Managed;Cuda-HostPinned;Cuda-UVM;SYCL
   endif()
 endforeach()
 
+
+# FIXME_SYCL - Clock_tic based test does not work for SYCL as the migration from host to device
+# can not be detected
+foreach(PairDeviceSpace HIP-Managed;Cuda-UVM;)
+  string(REGEX REPLACE "([^-]*)-(.*)" "\\1" DEVICE ${PairDeviceSpace})
+  string(REGEX REPLACE "([^-]*)-(.*)" "\\2" SPACE ${PairDeviceSpace})
+
+  string(TOUPPER ${DEVICE} UPPER_DEVICE)
+  string(TOLOWER ${DEVICE} dir)
+
+  if(Kokkos_ENABLE_${UPPER_DEVICE})
+    set(dir ${CMAKE_CURRENT_BINARY_DIR}/${dir})
+    file(MAKE_DIRECTORY ${dir})
+    set (Name SharedSpace)
+    set(file ${dir}/Test${DEVICE}${SPACE}_${Name}.cpp)
+    # Write to a temporary intermediate file and call configure_file to avoid
+    # updating timestamps triggering unnecessary rebuilds on subsequent cmake runs.
+    file(WRITE ${dir}/dummy.cpp
+        "#include <Test${DEVICE}${SPACE}_Category.hpp>\n"
+        "#include <Test${Name}.hpp>\n"
+    )
+    configure_file(${dir}/dummy.cpp ${file})
+    list(APPEND ${DEVICE}_SOURCES_SHAREDSPACE ${file})
+    list(APPEND ${DEVICE}_SOURCES ${${DEVICE}_SOURCES_SHAREDSPACE})
+  endif()
+endforeach()
+
 if(Kokkos_ENABLE_OPENMPTARGET)
   list(REMOVE_ITEM OpenMPTarget_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/openmptarget/TestOpenMPTarget_AtomicOperations_complexfloat.cpp
@@ -652,7 +679,8 @@ if(Kokkos_ENABLE_CUDA)
       cuda/TestCuda_TeamScratchStreams.cpp
       ${Cuda_SOURCES3}
       cuda/TestCuda_Spaces.cpp
-  )
+      ${Cuda_SOURCES_SHAREDSPACE}
+    )
 
     KOKKOS_ADD_EXECUTABLE_AND_TEST(
     UnitTest_CudaTimingBased
