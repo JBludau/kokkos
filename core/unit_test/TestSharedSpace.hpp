@@ -115,6 +115,8 @@ std::vector<uint64_t> incrementInLoop(ViewType& view,
 // Test is guarded for host device lamdas and thus needs
 // Kokkos_ENABLE_CUDA_LAMBDA=ON
 TEST(TEST_CATEGORY, shared_space) {
+  ASSERT_TRUE(Kokkos::has_SharedSpace());
+
 #if defined(KOKKOS_ARCH_VEGA900) || defined(KOKKOS_ARCH_VEGA906) || \
     defined(KOKKOS_ARCH_VEGA908)
   GTEST_SKIP()
