@@ -196,9 +196,9 @@ using SharedSpace KOKKOS_IMPL_SHARED_SPACE_ANNOTATION = HIPManagedSpace;
 using SharedSpace KOKKOS_IMPL_SHARED_SPACE_ANNOTATION =
     Experimental::SYCLSharedUSMSpace;
 #endif
-inline constexpr bool has_SharedSpace() { return true; }
+#define KOKKOS_HAS_SHARED_SPACE true
 #else
-inline constexpr bool has_SharedSpace() { return false; }
+#define KOKKOS_HAS_SHARED_SPACE false
 #endif
 
 }  // namespace Kokkos
