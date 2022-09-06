@@ -1,4 +1,3 @@
-
 /*
 //@HEADER
 // ************************************************************************
@@ -55,13 +54,12 @@ unsigned getBytesPerPage() {
 unsigned getBytesPerPage() { return sysconf(_SC_PAGESIZE); }
 #endif
 
+#include <gtest/gtest.h>
 #include <Kokkos_Core.hpp>
 
 #include <algorithm>
 #include <numeric>
 #include <iostream>
-
-#if defined(KOKKOS_ENABLE_CXX11_DISPATCH_LAMBDA)
 
 namespace {
 void printTimings(std::ostream& out, std::vector<uint64_t> const& tr,
@@ -81,6 +79,25 @@ T computeMean(std::vector<T> const& results) {
   return std::accumulate(results.begin(), results.end(), T{}) / results.size();
 }
 
+template <typename ViewType>
+class IncrementFunctor {
+ private:
+  using index_type = decltype(std::declval<ViewType>().size());
+  ViewType& view_;
+
+ public:
+  IncrementFunctor() = delete;
+
+  explicit IncrementFunctor(ViewType& view) : view_(view) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const index_type idx, uint64_t& clockTics) const {
+    uint64_t start = Kokkos::Impl::clock_tic();
+    ++view_(idx);
+    clockTics += Kokkos::Impl::clock_tic() - start;
+  }
+};
+
 // TIMING CAPTURED KERNEL
 // PREMISE: This kernel should always be memory bound, as we are measuring
 // memory access times. The compute load of an increment is small enough on
@@ -96,16 +113,12 @@ std::vector<uint64_t> incrementInLoop(ViewType& view,
   Kokkos::fence();
   for (unsigned i = 0; i < numRepetitions; ++i) {
     uint64_t sum_clockTics;
+    IncrementFunctor<ViewType> func(view);
     Kokkos::parallel_reduce(
         "increment",
         Kokkos::RangePolicy<ExecSpace, Kokkos::IndexType<index_type>>{
             0, view.size()},
-        KOKKOS_LAMBDA(index_type idx, uint64_t & clockTics) {
-          uint64_t start = Kokkos::Impl::clock_tic();
-          ++view(idx);
-          clockTics += Kokkos::Impl::clock_tic() - start;
-        },
-        sum_clockTics);
+        func, sum_clockTics);
     Kokkos::fence();
     results.push_back(sum_clockTics / view.size());
   }
@@ -114,8 +127,9 @@ std::vector<uint64_t> incrementInLoop(ViewType& view,
 
 // Test is guarded for host device lamdas and thus needs
 // Kokkos_ENABLE_CUDA_LAMBDA=ON
-TEST(TEST_CATEGORY, shared_space) {
+TEST(defaultdevicetype, shared_space) {
   ASSERT_TRUE(KOKKOS_HAS_SHARED_SPACE);
+  ASSERT_TRUE(Kokkos::has_SharedSpace());
 
 #if defined(KOKKOS_ARCH_VEGA900) || defined(KOKKOS_ARCH_VEGA906) || \
     defined(KOKKOS_ARCH_VEGA908)
@@ -124,12 +138,12 @@ TEST(TEST_CATEGORY, shared_space) {
 #endif
 #if defined(KOKKOS_ENABLE_SYCL) && !defined(KOKKOS_ARCH_INTEL_GPU)
   GTEST_SKIP()
-      << "skipping because clocktic is only defined for sycl+intel gpu";
+      << "skipping because clock_tic is only defined for sycl+intel gpu";
 #endif
 
   const unsigned int numRepetitions      = 10;
   const unsigned int numDeviceHostCycles = 3;
-  double threshold                       = 10;
+  double threshold                       = 1.2;
   unsigned int numPages                  = 100;
   size_t numBytes                        = numPages * getBytesPerPage();
 
@@ -139,74 +153,91 @@ TEST(TEST_CATEGORY, shared_space) {
   // ALLOCATION
   Kokkos::View<int*, Kokkos::SharedSpace> sharedData("sharedData",
                                                      numBytes / sizeof(int));
-  Kokkos::View<int*, Kokkos::DefaultExecutionSpace::memory_space> deviceData(
-      "deviceData", numBytes / sizeof(int));
+  Kokkos::View<int*, Kokkos::DefaultExecutionSpace::memory_space>
+      defaultExecData("defaultExecData", numBytes / sizeof(int));
+  Kokkos::View<int*, Kokkos::DefaultHostExecutionSpace::memory_space>
+      defaultHostExecData("defaultHostExecData", numBytes / sizeof(int));
   Kokkos::fence();
 
-  // GET DEVICE LOCAL TIMINGS
-  auto deviceLocalResults = incrementInLoop<Kokkos::DefaultExecutionSpace>(
-      deviceData, numRepetitions);
+  // GET DEFAULT EXECSPACE LOCAL TIMINGS
+  auto defaultExecLocalTimings = incrementInLoop<Kokkos::DefaultExecutionSpace>(
+      defaultExecData, numRepetitions);
+
+  // GET DEFAULT HOSTEXECSPACE LOCAL TIMINGS
+  auto defaultHostExecLocalTimings =
+      incrementInLoop<Kokkos::DefaultHostExecutionSpace>(defaultHostExecData,
+                                                         numRepetitions);
 
   // GET PAGE MIGRATING TIMINGS DATA
-  std::vector<decltype(deviceLocalResults)> deviceResults{};
-  std::vector<decltype(deviceLocalResults)> hostResults{};
+  std::vector<decltype(defaultExecLocalTimings)> defaultExecSharedTimings{};
+  std::vector<decltype(defaultExecLocalTimings)> defaultHostExecSharedTimings{};
   for (unsigned i = 0; i < numDeviceHostCycles; ++i) {
     // GET RESULTS DEVICE
-    deviceResults.push_back(incrementInLoop<Kokkos::DefaultExecutionSpace>(
-        sharedData, numRepetitions));
+    defaultExecSharedTimings.push_back(
+        incrementInLoop<Kokkos::DefaultExecutionSpace>(sharedData,
+                                                       numRepetitions));
 
     // GET RESULTS HOST
-    hostResults.push_back(incrementInLoop<Kokkos::DefaultHostExecutionSpace>(
-        sharedData, numRepetitions));
+    defaultHostExecSharedTimings.push_back(
+        incrementInLoop<Kokkos::DefaultHostExecutionSpace>(sharedData,
+                                                           numRepetitions));
   }
 
   // COMPUTE STATISTICS OF HOST AND DEVICE LOCAL KERNELS
-  auto deviceLocalMean = computeMean(deviceLocalResults);
+  auto defaultExecLocalMean     = computeMean(defaultExecLocalTimings);
+  auto defaultHostExecLocalMean = computeMean(defaultHostExecLocalTimings);
 
-  // ASSESS PAGE MIGRATIONS
-  bool migratesBackToGPU          = true;
-  bool migratesAtMaxOncePerAccess = true;
+  // ASSESS RESULTS
+  bool fastAsLocalOnRepeatedAccess = true;
 
   for (unsigned cycle = 0; cycle < numDeviceHostCycles; ++cycle) {
-    unsigned int indicatedPageMigrationsDevice = std::count_if(
-        deviceResults[cycle].begin(), deviceResults[cycle].end(),
-        [&](auto const& val) { return val > (threshold * deviceLocalMean); });
+    std::for_each(std::next(defaultExecSharedTimings[cycle].begin()),
+                  defaultExecSharedTimings[cycle].end(),
+                  [&](const double timing) {
+                    (timing < threshold * defaultExecLocalMean)
+                        ? fastAsLocalOnRepeatedAccess &= true
+                        : fastAsLocalOnRepeatedAccess &= false;
+                  });
 
-    if (indicatedPageMigrationsDevice > 1) migratesAtMaxOncePerAccess = false;
-
-    if (cycle != 0 && indicatedPageMigrationsDevice != 1)
-      migratesBackToGPU = false;
+    std::for_each(std::next(defaultHostExecSharedTimings[cycle].begin()),
+                  defaultHostExecSharedTimings[cycle].end(),
+                  [&](const double timing) {
+                    (timing < threshold * defaultExecLocalMean)
+                        ? fastAsLocalOnRepeatedAccess &= true
+                        : fastAsLocalOnRepeatedAccess &= false;
+                  });
   }
 
   // CHECK IF PASSED
-  bool passed = (migratesBackToGPU && migratesAtMaxOncePerAccess);
+  bool passed = (fastAsLocalOnRepeatedAccess);
 
   // PRINT IF NOT PASSED
   if (!passed) {
     std::cout << "Page size as reported by os: " << getBytesPerPage()
               << " bytes \n";
     std::cout << "Allocating " << numPages
-              << " pages of memory in pageMigratingMemorySpace.\n";
+              << " pages of memory in SharedSpace.\n";
 
     std::cout << "Behavior found: \n";
-    std::cout << "Memory migrates back to GPU is: " << migratesBackToGPU
-              << " we expect true \n";
-    std::cout << "Memory migrates at max once per access: "
-              << migratesAtMaxOncePerAccess << " we expect true \n\n";
+    std::cout << "SharedSpace is as fast as local access on repeated access"
+              << fastAsLocalOnRepeatedAccess << " we expect true \n\n";
 
-    std::cout << "Please look at the following timings. A migration was "
-                 "marked detected if the time was larger than "
-              << threshold * deviceLocalMean << " for the device \n\n";
+    std::cout << "Please look at the following timings.\n\n";
 
+    std::cout << "################SHARED SPACE####################\n";
     for (unsigned cycle = 0; cycle < numDeviceHostCycles; ++cycle) {
-      std::cout << "device timings of run " << cycle << ":\n";
-      printTimings(std::cout, deviceResults[cycle],
-                   threshold * deviceLocalMean);
-      std::cout << "host timings of run " << cycle << ":\n";
-      printTimings(std::cout, hostResults[cycle]);
+      std::cout << "DefaultExectionSpace timings of run " << cycle << ":\n";
+      printTimings(std::cout, defaultExecSharedTimings[cycle],
+                   threshold * defaultExecLocalMean);
+      std::cout << "DefaultHostExecutionSpace timings of run " << cycle
+                << ":\n";
+      printTimings(std::cout, defaultHostExecSharedTimings[cycle],
+                   threshold * defaultHostExecLocalMean);
     }
+    std::cout << "################LOCAL SPACE####################\n";
+    printTimings(std::cout, defaultExecLocalTimings);
+    printTimings(std::cout, defaultHostExecLocalTimings);
   }
   ASSERT_TRUE(passed);
 }
 }  // namespace
-#endif
