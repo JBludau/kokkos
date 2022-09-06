@@ -186,20 +186,30 @@ using DefaultHostExecutionSpace KOKKOS_IMPL_DEFAULT_HOST_EXEC_SPACE_ANNOTATION =
     "At least one of the following execution spaces must be defined in order to use Kokkos: Kokkos::OpenMP, Kokkos::Threads, Kokkos::Experimental::HPX, or Kokkos::Serial."
 #endif
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || \
-    defined(KOKKOS_ENABLE_SYCL)
+// check for devices that support sharedSpace
 #if defined(KOKKOS_ENABLE_CUDA)
 using SharedSpace KOKKOS_IMPL_SHARED_SPACE_ANNOTATION = CudaUVMSpace;
+#define KOKKOS_HAS_SHARED_SPACE 1
 #elif defined(KOKKOS_ENABLE_HIP)
 using SharedSpace KOKKOS_IMPL_SHARED_SPACE_ANNOTATION = HIPManagedSpace;
+#define KOKKOS_HAS_SHARED_SPACE 1
 #elif defined(KOKKOS_ENABLE_SYCL)
 using SharedSpace KOKKOS_IMPL_SHARED_SPACE_ANNOTATION =
     Experimental::SYCLSharedUSMSpace;
+#define KOKKOS_HAS_SHARED_SPACE 1
+// if only host compile point to HostSpace
+#elif !defined(KOKKOS_ENABLE_OPENACC) && !defined(KOKKOS_ENABLE_OPENMPTARGET)
+using SharedSpace KOKKOS_IMPL_SHARED_SPACE_ANNOTATION = HostSpace;
+#define KOKKOS_HAS_SHARED_SPACE 1
 #endif
-#define KOKKOS_HAS_SHARED_SPACE true
+
+inline constexpr bool has_SharedSpace() {
+#if defined KOKKOS_HAS_SHARED_SPACE
+  return true;
 #else
-#define KOKKOS_HAS_SHARED_SPACE false
+  return false;
 #endif
+}
 
 }  // namespace Kokkos
 
