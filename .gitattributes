@@ -1,8 +1,13 @@
 .clang* export-ignore
 .cmake* export-ignore
-.git* export-ignore
+.git-blame-ignore-revs export-ignore
 .jenkins* export-ignore
 .appveyor.yml export-ignore
 .*gitlab-ci.yml export-ignore
 scripts/ export-ignore
+.git/ export-ignore
+.github/*.yml export-ignore
+.github/workflows export-ignore
+.github/ISSUE_TEMPLATE export-ignore
+.gitlab/*.yml export-ignore
 LICENSE_FILE_HEADER export-ignore
