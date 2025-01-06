@@ -20,6 +20,8 @@
 #include <iostream>
 
 extern "C" void print_fortran_();
+void print_fuzz(Kokkos::View<int*>);
+void print_foo();
 
 struct CountFunctor {
   KOKKOS_FUNCTION void operator()(const long i, long& lcount) const {
@@ -64,6 +66,8 @@ int main(int argc, char* argv[]) {
   printf("Sequential: %ld    %10.6f\n", seq_count, count_time);
 
   print_fortran_();
+  print_foo();
+  print_fuzz(Kokkos::View<int*>{"testview",10});
 
   Kokkos::finalize();
 

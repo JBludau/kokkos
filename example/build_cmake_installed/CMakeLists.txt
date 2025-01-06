@@ -1,21 +1,34 @@
-# Kokkos minimally requires 3.16 right now,
+# Kokkos minimally requires 3.19 right now,
 # but your project can set it higher
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 
 # Projects can safely mix languages - must have C++ support
-# Kokkos flags will only apply to C++ files
 project(Example CXX Fortran)
 
-# Look for an installed Kokkos
-find_package(Kokkos REQUIRED)
+# define some libs in subdirs
+add_subdirectory(lib_without_kokkos_dependency)
+add_subdirectory(lib_with_public_kokkos_dependency)
+add_subdirectory(lib_depending_on_lib_with_public_kokkos_dependency)
+add_subdirectory(lib_with_private_kokkos_dependency)
+add_subdirectory(lib_depending_on_lib_with_private_kokkos_dependency)
 
-add_executable(example cmake_example.cpp foo.f)
+# create an executable that uses kokkos in interfaces
+add_executable(example_public_kokkos example_public_kokkos.cpp bar.cpp foo.f)
+
+# create an executable that does not use kokkos in interfaces
+add_executable(example_private_kokkos example_private_kokkos.cpp bar.cpp foo.f)
+
+# for LLVMFlang we need to use fortran for linking
 if(CMAKE_Fortran_COMPILER_ID STREQUAL LLVMFlang)
-  set_target_properties(example PROPERTIES LINKER_LANGUAGE Fortran)
+  set_target_properties(example_public_kokkos PROPERTIES LINKER_LANGUAGE Fortran)
+  set_target_properties(example_private_kokkos PROPERTIES LINKER_LANGUAGE Fortran)
 endif()
 
-# This is the only thing required to set up compiler/linker flags
-target_link_libraries(example Kokkos::kokkos)
+#link your executable to the libraries
+target_link_libraries(example_public_kokkos Lib_without_kokkos_dependency Lib_with_public_kokkos_dependency Lib_with_private_kokkos_dependency Lib_depending_on_lib_with_public_kokkos_dependency Lib_depending_on_lib_with_public_kokkos_dependency)
+
+target_link_libraries(example_private_kokkos Lib_without_kokkos_dependency Lib_with_private_kokkos_dependency Lib_depending_on_lib_with_private_kokkos_dependency)
 
 enable_testing()
-add_test(NAME KokkosInTree_Verify COMMAND example 10)
+add_test(NAME KokkosPublic_Verify COMMAND example_public_kokkos 10)
+add_test(NAME KokkosPrivate_Verify COMMAND example_private_kokkos 10)
