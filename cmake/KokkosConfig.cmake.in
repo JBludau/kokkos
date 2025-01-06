@@ -21,8 +21,9 @@ set(Kokkos_FOUND_INSTALL_DIR ${Kokkos_CMAKE_DIR}/../../..)
 UNSET(Kokkos_CMAKE_DIR)
 
 IF(NOT DEFINED Kokkos_GLOBAL_COMPILATION)
-  set(Kokkos_GLOBAL_COMPILATION true)
+  set(Kokkos_GLOBAL_COMPILATION ON CACHE BOOL "Weather Kokkos sets source and target properties globally via a deferred call")
 ENDIF()
+
 
 IF(Kokkos_GLOBAL_COMPILATION)
 
