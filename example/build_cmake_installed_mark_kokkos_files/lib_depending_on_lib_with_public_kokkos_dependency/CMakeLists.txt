@@ -1,0 +1,7 @@
+add_library(Lib_depending_on_lib_with_public_kokkos_dependency fupp.cpp)
+# as the lib uses Kokkos in its interfaces, the source files have to be marked accordingly
+kokkos_set_source_and_target_properties(SOURCE fupp.cpp)
+
+target_link_libraries(Lib_depending_on_lib_with_public_kokkos_dependency Lib_with_public_kokkos_dependency)
+# same for the target
+kokkos_set_source_and_target_properties(TARGET Lib_depending_on_lib_with_public_kokkos_dependency)

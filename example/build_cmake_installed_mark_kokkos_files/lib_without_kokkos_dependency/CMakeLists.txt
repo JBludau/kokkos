@@ -1,0 +1,1 @@
+add_library(Lib_without_kokkos_dependency foo.cpp)

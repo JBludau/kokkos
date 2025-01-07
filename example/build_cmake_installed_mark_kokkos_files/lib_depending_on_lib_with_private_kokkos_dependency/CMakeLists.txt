@@ -1,0 +1,4 @@
+add_library(Lib_depending_on_lib_with_private_kokkos_dependency full.cpp)
+target_link_libraries(Lib_depending_on_lib_with_private_kokkos_dependency PRIVATE Lib_with_private_kokkos_dependency)
+# target with private (tansitive) Kokkos dependency still have to be marked, as kokkos adds architecture dependent linker flags
+kokkos_set_source_and_target_properties(LINK_ONLY_TARGET Lib_depending_on_lib_with_private_kokkos_dependency)
