@@ -403,3 +403,127 @@ endif()
     endforeach()
 endfunction()
 
+# this function is provided to easily select which files use the same compiler as Kokkos
+# when it was installed (or nvcc_wrapper):
+#
+#       GLOBAL      --> all files
+#       TARGET      --> all files in a target
+#       SOURCE      --> specific source files
+#       DIRECTORY   --> all files in directory
+#       PROJECT     --> all files/targets in a project/subproject
+#
+# Use the COMPILER argument to specify a compiler, if needed. By default, it will
+# set the values to ${Kokkos_CXX_COMPILER} unless Kokkos_ENABLE_CUDA=ON and
+# Kokkos_CXX_COMPILER_ID is NVIDIA, then it will set it to nvcc_wrapper
+#
+# Use CHECK_CUDA_COMPILES to run a check when CUDA is enabled
+#
+function(kokkos_compilation)
+  cmake_parse_arguments(
+    COMP "GLOBAL;PROJECT;CHECK_CUDA_COMPILES" "COMPILER" "DIRECTORY;TARGET;SOURCE;COMMAND_PREFIX" ${ARGN}
+  )
+
+  message(
+    WARNING
+      "'kokkos_compilation' is deprecated and will be removed in the future. Use `kokkos_set_source_and_target_properties` instead"
+  )
+
+  # if built w/o CUDA support, we want to basically make this a no-op
+  set(_Kokkos_ENABLE_CUDA @Kokkos_ENABLE_CUDA@)
+
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
+    set(MAYBE_CURRENT_INSTALLATION_ROOT "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../..")
+  endif()
+
+  # search relative first and then absolute
+  set(_HINTS "${MAYBE_CURRENT_INSTALLATION_ROOT}" "@CMAKE_INSTALL_PREFIX@")
+
+  # find kokkos_launch_compiler
+  find_program(
+    Kokkos_COMPILE_LAUNCHER
+    NAMES kokkos_launch_compiler
+    HINTS ${_HINTS}
+    PATHS ${_HINTS}
+    PATH_SUFFIXES bin
+  )
+
+  if(NOT Kokkos_COMPILE_LAUNCHER)
+    message(
+      FATAL_ERROR
+        "Kokkos could not find 'kokkos_launch_compiler'. Please set '-DKokkos_COMPILE_LAUNCHER=/path/to/launcher'"
+    )
+  endif()
+
+  # if COMPILER was not specified, assume Kokkos_CXX_COMPILER
+  if(NOT COMP_COMPILER)
+    set(COMP_COMPILER ${Kokkos_CXX_COMPILER})
+    if(_Kokkos_ENABLE_CUDA AND Kokkos_CXX_COMPILER_ID STREQUAL NVIDIA)
+      # find nvcc_wrapper
+      find_program(
+        Kokkos_NVCC_WRAPPER
+        NAMES nvcc_wrapper
+        HINTS ${_HINTS}
+        PATHS ${_HINTS}
+        PATH_SUFFIXES bin
+      )
+      # fatal if we can't nvcc_wrapper
+      if(NOT Kokkos_NVCC_WRAPPER)
+        message(
+          FATAL_ERROR "Kokkos could not find nvcc_wrapper. Please set '-DKokkos_NVCC_WRAPPER=/path/to/nvcc_wrapper'"
+        )
+      endif()
+      set(COMP_COMPILER ${Kokkos_NVCC_WRAPPER})
+    endif()
+  endif()
+
+  # check that the original compiler still exists!
+  if(NOT EXISTS ${COMP_COMPILER})
+    message(FATAL_ERROR "Kokkos could not find original compiler: '${COMP_COMPILER}'")
+  endif()
+
+  # try to ensure that compiling cuda code works!
+  if(_Kokkos_ENABLE_CUDA AND COMP_CHECK_CUDA_COMPILES)
+
+    # this may fail if kokkos_compiler launcher was used during install
+    kokkos_cxx_compiler_cuda_test(_COMPILES_CUDA ${Kokkos_COMPILE_LAUNCHER} ${COMP_COMPILER} ${CMAKE_CXX_COMPILER})
+
+    # if above failed, throw an error
+    if(NOT _COMPILES_CUDA)
+      message(FATAL_ERROR "kokkos_cxx_compiler_cuda_test failed! Test commands:\n${_COMPILES_CUDA_COMMANDS}")
+    endif()
+  endif()
+
+  if(COMP_COMMAND_PREFIX)
+    set(_PREFIX "${COMP_COMMAND_PREFIX}")
+    string(REPLACE ";" " " _PREFIX "${COMP_COMMAND_PREFIX}")
+    set(Kokkos_COMPILER_LAUNCHER "${_PREFIX} ${Kokkos_COMPILE_LAUNCHER}")
+  endif()
+
+  if(COMP_GLOBAL)
+    # if global, don't bother setting others
+    set_property(
+      GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${Kokkos_COMPILE_LAUNCHER} ${COMP_COMPILER} ${CMAKE_CXX_COMPILER}"
+    )
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${Kokkos_COMPILE_LAUNCHER} ${COMP_COMPILER} ${CMAKE_CXX_COMPILER}")
+  else()
+    foreach(_TYPE PROJECT DIRECTORY TARGET SOURCE)
+      # make project/subproject scoping easy, e.g. KokkosCompilation(PROJECT) after project(...)
+      if("${_TYPE}" STREQUAL "PROJECT" AND COMP_${_TYPE})
+        list(APPEND COMP_DIRECTORY ${PROJECT_SOURCE_DIR})
+        unset(COMP_${_TYPE})
+      endif()
+      # set the properties if defined
+      if(COMP_${_TYPE})
+        # MESSAGE(STATUS "Using ${COMP_COMPILER} :: ${_TYPE} :: ${COMP_${_TYPE}}")
+        set_property(
+          ${_TYPE} ${COMP_${_TYPE}} PROPERTY RULE_LAUNCH_COMPILE
+                                             "${Kokkos_COMPILE_LAUNCHER} ${COMP_COMPILER} ${CMAKE_CXX_COMPILER}"
+        )
+        set_property(
+          ${_TYPE} ${COMP_${_TYPE}} PROPERTY RULE_LAUNCH_LINK
+                                             "${Kokkos_COMPILE_LAUNCHER} ${COMP_COMPILER} ${CMAKE_CXX_COMPILER}"
+        )
+      endif()
+    endforeach()
+  endif()
+endfunction()

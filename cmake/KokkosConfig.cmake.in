@@ -20,10 +20,47 @@ INCLUDE("${Kokkos_CMAKE_DIR}/KokkosConfigCommon.cmake")
 set(Kokkos_FOUND_INSTALL_DIR ${Kokkos_CMAKE_DIR}/../../..)
 UNSET(Kokkos_CMAKE_DIR)
 
+# components deprecation
+if("launch_compiler" IN_LIST Kokkos_FIND_COMPONENTS)
+  message(
+    WARNING
+      "'launch_compiler' is deprecated and will be removed in the future."
+  )
+elseif("separable_compilation" IN_LIST Kokkos_FIND_COMPONENTS)
+  message(
+    WARNING
+      "'separable_compilation' is deprecated and will be removed in the future."
+  )
+endif()
+
+if("launch_compiler" IN_LIST Kokkos_FIND_COMPONENTS AND "separable_compilation" IN_LIST Kokkos_FIND_COMPONENTS)
+  message(STATUS "'launch_compiler' implies global redirection of targets depending on Kokkos to appropriate compiler.")
+  message(
+    STATUS
+      "'separable_compilation' implies explicitly defining where redirection occurs via 'kokkos_compilation(PROJECT|TARGET|SOURCE|DIRECTORY ...)'"
+  )
+  message(FATAL_ERROR "Conflicting COMPONENTS: 'launch_compiler' and 'separable_compilation'")
+endif()
+
+if("launch_compiler" IN_LIST Kokkos_FIND_COMPONENTS)
+  #
+  # if find_package(Kokkos COMPONENTS launch_compiler) then rely on the
+  # RULE_LAUNCH_COMPILE and RULE_LAUNCH_LINK to always redirect to the
+  # appropriate compiler for Kokkos
+  #
+
+  message(
+    STATUS
+      "kokkos_launch_compiler is enabled globally. C++ compiler commands with -DKOKKOS_DEPENDENCE will be redirected to the appropriate compiler for Kokkos"
+  )
+  kokkos_compilation(GLOBAL CHECK_CUDA_COMPILES)
+  set(Kokkos_GLOBAL_COMPILATION OFF)
+endif()
+# end of components deprecation
+
 IF(NOT DEFINED Kokkos_GLOBAL_COMPILATION)
   set(Kokkos_GLOBAL_COMPILATION ON CACHE BOOL "Weather Kokkos sets source and target properties globally via a deferred call")
 ENDIF()
-
 
 IF(Kokkos_GLOBAL_COMPILATION)
 
