@@ -14,23 +14,17 @@ include(CMakeFindDependencyMacro)
 #the Kokkos targets depend in some way on the TPL imports
 @KOKKOS_TPL_EXPORTS@
 
-GET_FILENAME_COMPONENT(Kokkos_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-INCLUDE("${Kokkos_CMAKE_DIR}/KokkosTargets.cmake")
-INCLUDE("${Kokkos_CMAKE_DIR}/KokkosConfigCommon.cmake")
+get_filename_component(Kokkos_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+include("${Kokkos_CMAKE_DIR}/KokkosTargets.cmake")
+include("${Kokkos_CMAKE_DIR}/KokkosConfigCommon.cmake")
 set(Kokkos_FOUND_INSTALL_DIR ${Kokkos_CMAKE_DIR}/../../..)
-UNSET(Kokkos_CMAKE_DIR)
+unset(Kokkos_CMAKE_DIR)
 
 # components deprecation
 if("launch_compiler" IN_LIST Kokkos_FIND_COMPONENTS)
-  message(
-    WARNING
-      "'launch_compiler' is deprecated and will be removed in the future."
-  )
+  message(WARNING "'launch_compiler' is deprecated and will be removed in the future.")
 elseif("separable_compilation" IN_LIST Kokkos_FIND_COMPONENTS)
-  message(
-    WARNING
-      "'separable_compilation' is deprecated and will be removed in the future."
-  )
+  message(WARNING "'separable_compilation' is deprecated and will be removed in the future.")
 endif()
 
 if("launch_compiler" IN_LIST Kokkos_FIND_COMPONENTS AND "separable_compilation" IN_LIST Kokkos_FIND_COMPONENTS)
@@ -58,17 +52,23 @@ if("launch_compiler" IN_LIST Kokkos_FIND_COMPONENTS)
 endif()
 # end of components deprecation
 
-IF(NOT DEFINED Kokkos_GLOBAL_COMPILATION)
-  set(Kokkos_GLOBAL_COMPILATION ON CACHE BOOL "Weather Kokkos sets source and target properties globally via a deferred call")
-ENDIF()
+if(NOT DEFINED Kokkos_GLOBAL_COMPILATION)
+  set(Kokkos_GLOBAL_COMPILATION ON
+      CACHE BOOL "Weather Kokkos sets source and target properties globally via a deferred call"
+  )
+endif()
 
-IF(Kokkos_GLOBAL_COMPILATION)
+if(Kokkos_GLOBAL_COMPILATION)
 
-    cmake_language(EVAL CODE "
+  cmake_language(
+    EVAL
+    CODE
+    "
     cmake_language(DEFER DIRECTORY ${PROJECT_SOURCE_DIR} CALL kokkos_set_source_and_target_properties(PROJECT Kokkos_ROOT ${Kokkos_FOUND_INSTALL_DIR}))
-    ")
+    "
+  )
 
-unset(Kokkos_FOUND_INSTALL_DIR)
-ENDIF()
+  unset(Kokkos_FOUND_INSTALL_DIR)
+endif()
 
 set(Kokkos_COMPILE_LANGUAGE @KOKKOS_COMPILE_LANGUAGE@)
