@@ -22,9 +22,7 @@ void print_furr();
 void print_foo();
 
 int main(int argc, char* argv[]) {
-
   print_furr();
   print_foo();
   print_fortran_();
-
 }
