@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.19)
 
 # Projects can safely mix languages - must have C++ support
-project(Example CXX Fortran CUDA)
+project(Example CXX Fortran)
 
 # In the top-level CMakeLists.txt ensure, that all find_package(Kokkos) calls are done without setting compilation flags for the whole project
 set(Kokkos_GLOBAL_COMPILATION OFF)
@@ -23,13 +23,20 @@ add_subdirectory(lib_depending_on_lib_with_public_kokkos_dependency)
 add_subdirectory(lib_depending_on_lib_with_private_kokkos_dependency)
 
 # create an executable that uses kokkos in interfaces
-add_executable(example_public_kokkos example_public_kokkos.cpp bar.cpp foo.f)
+add_executable(
+  example_public_kokkos ../example_source/example_public_kokkos.cpp ../example_source/bar.cpp ../example_source/foo.f
+)
 # as kokkos is used in the interface, the files and target have to be marked
-kokkos_set_source_and_target_properties(SOURCE example_public_kokkos.cpp bar.cpp)
+kokkos_set_source_and_target_properties(
+  SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/../example_source/example_public_kokkos.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../example_source/bar.cpp
+)
 kokkos_set_source_and_target_properties(TARGET example_public_kokkos)
 
 # create an executable that does not use kokkos in interfaces
-add_executable(example_private_kokkos example_private_kokkos.cpp bar.cpp foo.f)
+add_executable(
+  example_private_kokkos ../example_source/example_private_kokkos.cpp ../example_source/bar.cpp ../example_source/foo.f
+)
 # as kokkos adds architecture dependent linker flags, targets with (transitive) private dependency on Kokkos have to be marked as well
 kokkos_set_source_and_target_properties(LINK_ONLY_TARGET example_private_kokkos)
 
