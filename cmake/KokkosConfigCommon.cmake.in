@@ -277,6 +277,73 @@ function(kokkos_get_directory_targets FOUND_COMPILE_TARGETS FOUND_LINK_TARGETS D
   set(${FOUND_LINK_TARGETS} ${link_targets} PARENT_SCOPE)
 endfunction()
 
+# this function sets the source and target properties for all targets that link to a given library
+#
+#       PUBLIC          --> input: set downstream sources and targets to have a public dependency on kokkos. If not given a private dependency is assumed
+#       LIBRARY         --> input: name of the library downstream targets need to link to for this function to set the properties.
+#       USE_LAUNCHER    --> input: Command for a launcher to use
+#
+function(kokkos_set_dependent_library_properties)
+  cmake_parse_arguments(INP "PUBLIC" "LIBRARY" "USE_LAUNCHER" ${ARGN})
+
+  if(NOT INP_LIBRARY)
+    message(FATAL_ERROR "'kokkos_set_dependent_library_properties' needs a LIBRARY argument")
+  endif()
+
+  kokkos_get_directory_targets(COMPILE_TARGETS LINK_TARGETS ${INP_LIBRARY} ${PROJECT_SOURCE_DIR})
+
+  if(INP_PUBLIC)
+    if(@Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE@)
+      foreach(target IN LISTS COMPILE_TARGETS)
+        get_target_property(target_sources ${target} SOURCES)
+        get_target_property(target_dir ${target} SOURCE_DIR)
+        list(FILTER target_sources INCLUDE REGEX "\\.cpp$|\\.cxx$")
+        message(
+          DEBUG
+          "Kokkos setting language to @KOKKOS_COMPILE_LANGUAGE@ on target ${target} for sources ${target_dir}/{${target_sources}}"
+        )
+        foreach(source IN LISTS target_sources)
+          set_property(
+            SOURCE ${target_dir}/${source} TARGET_DIRECTORY ${target} PROPERTY LANGUAGE @KOKKOS_COMPILE_LANGUAGE@
+          )
+        endforeach()
+      endforeach()
+    endif()
+    kokkos_set_source_and_target_properties(USE_LAUNCHER ${INP_USE_LAUNCHER} TARGET ${LINK_TARGETS})
+  endif()
+
+  kokkos_set_source_and_target_properties(USE_LAUNCHER ${INP_USE_LAUNCHER} LINK_ONLY_TARGET ${LINK_TARGETS})
+endfunction()
+
+# this function sets the source and target properties for all targets that link to a given library but deferred to the end of the cmake runtime
+#
+#       PUBLIC          --> input: set downstream sources and targets to have a public dependency on kokkos. If not given a private dependency is assumed
+#       LIBRARY         --> input: name of the library downstream targets need to link to for this function to set the properties.
+#       USE_LAUNCHER    --> input: Command for a launcher to use
+#
+function(kokkos_defer_set_dependent_library_properties)
+  cmake_parse_arguments(ARG "PUBLIC" "LIBRARY" "USE_LAUNCHER" ${ARGN})
+
+  if(NOT ARG_LIBRARY)
+    message(FATAL_ERROR "'kokkos_defer_set_dependent_library_properties' needs a LIBRARY argument")
+  endif()
+
+  if(ARG_PUBLIC)
+    cmake_language(
+      EVAL
+      CODE
+      "cmake_language(DEFER DIRECTORY ${PROJECT_SOURCE_DIR} CALL kokkos_set_dependent_library_properties(PUBLIC USE_LAUNCHER ${ARG_USE_LAUNCHER} LIBRARY ${ARG_LIBRARY} ))"
+    )
+  else()
+    cmake_language(
+      EVAL
+      CODE
+      "cmake_language(DEFER DIRECTORY ${PROJECT_SOURCE_DIR} CALL kokkos_set_dependent_library_properties(USE_LAUNCHER ${ARG_USE_LAUNCHER} LIBRARY ${ARG_LIBRARY} ))"
+    )
+  endif()
+
+endfunction()
+
 # this function sets the source and target properties that Kokkos requires
 #
 #       PROJECT           --> all cpp,cxx files for targets that link to kokkos in the project
