@@ -1,0 +1,5 @@
+add_library(
+  Lib_depending_on_lib_with_private_kokkos_dependency
+  ../../example_source/lib_depending_on_lib_with_private_kokkos_dependency/full.cpp
+)
+target_link_libraries(Lib_depending_on_lib_with_private_kokkos_dependency PRIVATE Lib_with_private_kokkos_dependency)
