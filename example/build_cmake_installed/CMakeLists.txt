@@ -13,10 +13,14 @@ add_subdirectory(lib_with_private_kokkos_dependency)
 add_subdirectory(lib_depending_on_lib_with_private_kokkos_dependency)
 
 # create an executable that uses kokkos in interfaces
-add_executable(example_public_kokkos example_public_kokkos.cpp bar.cpp foo.f)
+add_executable(
+  example_public_kokkos ../example_source/example_public_kokkos.cpp ../example_source/bar.cpp ../example_source/foo.f
+)
 
 # create an executable that does not use kokkos in interfaces
-add_executable(example_private_kokkos example_private_kokkos.cpp bar.cpp foo.f)
+add_executable(
+  example_private_kokkos ../example_source/example_private_kokkos.cpp ../example_source/bar.cpp ../example_source/foo.f
+)
 
 # for LLVMFlang we need to use fortran for linking
 if(CMAKE_Fortran_COMPILER_ID STREQUAL LLVMFlang)
