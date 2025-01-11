@@ -332,13 +332,13 @@ function(kokkos_defer_set_dependent_library_properties)
     cmake_language(
       EVAL
       CODE
-      "cmake_language(DEFER DIRECTORY ${PROJECT_SOURCE_DIR} CALL kokkos_set_dependent_library_properties(PUBLIC USE_LAUNCHER ${ARG_USE_LAUNCHER} LIBRARY ${ARG_LIBRARY} ))"
+      "cmake_language(DEFER DIRECTORY ${PROJECT_SOURCE_DIR} CALL kokkos_set_dependent_library_properties PUBLIC USE_LAUNCHER ${ARG_USE_LAUNCHER} LIBRARY ${ARG_LIBRARY})"
     )
   else()
     cmake_language(
       EVAL
       CODE
-      "cmake_language(DEFER DIRECTORY ${PROJECT_SOURCE_DIR} CALL kokkos_set_dependent_library_properties(USE_LAUNCHER ${ARG_USE_LAUNCHER} LIBRARY ${ARG_LIBRARY} ))"
+      "cmake_language(DEFER DIRECTORY ${PROJECT_SOURCE_DIR} CALL kokkos_set_dependent_library_properties USE_LAUNCHER ${ARG_USE_LAUNCHER} LIBRARY ${ARG_LIBRARY})"
     )
   endif()
 

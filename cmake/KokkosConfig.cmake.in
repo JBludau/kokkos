@@ -64,7 +64,7 @@ if(Kokkos_GLOBAL_COMPILATION)
     EVAL
     CODE
     "
-    cmake_language(DEFER DIRECTORY ${PROJECT_SOURCE_DIR} CALL kokkos_set_source_and_target_properties(PROJECT Kokkos_ROOT ${Kokkos_FOUND_INSTALL_DIR}))
+    cmake_language(DEFER DIRECTORY ${PROJECT_SOURCE_DIR} CALL kokkos_set_source_and_target_properties PROJECT Kokkos_ROOT ${Kokkos_FOUND_INSTALL_DIR})
     "
   )
 
