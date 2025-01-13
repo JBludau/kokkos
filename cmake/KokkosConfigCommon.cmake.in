@@ -315,7 +315,7 @@ function(kokkos_set_dependent_library_properties)
   kokkos_set_source_and_target_properties(USE_LAUNCHER ${INP_USE_LAUNCHER} LINK_ONLY_TARGET ${LINK_TARGETS})
 endfunction()
 
-# this function sets the source and target properties for all targets that link to a given library but deferred to the end of the cmake runtime
+# this function sets the source and target properties for all targets that link to a given library but deferred to the end of the CMake setup
 #
 #       PUBLIC          --> input: set downstream sources and targets to have a public dependency on kokkos. If not given a private dependency is assumed
 #       LIBRARY         --> input: name of the library downstream targets need to link to for this function to set the properties.
