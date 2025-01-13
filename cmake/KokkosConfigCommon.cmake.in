@@ -279,7 +279,7 @@ endfunction()
 
 # this function sets the source and target properties for all targets that link to a given library
 #
-#       PUBLIC          --> input: set downstream sources and targets to have a public dependency on kokkos. If not given a private dependency is assumed
+#       PUBLIC          --> input: set downstream sources and targets to have a public dependency on kokkos. If not given, a private dependency is assumed
 #       LIBRARY         --> input: name of the library downstream targets need to link to for this function to set the properties.
 #       USE_LAUNCHER    --> input: Command for a launcher to use
 #
