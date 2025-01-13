@@ -209,7 +209,7 @@ int main()
   set(${_VAR} ${_RET} PARENT_SCOPE)
 endfunction()
 
-# this function searches a given target recursively looking for transitive dependency to Kokkos
+# this function searches a given target recursively looking for a transitive dependency to Kokkos
 #
 #       FOUND_DEPENDENCY    --> output: is set to ON if a dependency to kokkos is found
 #       LIBRARY_KEYWORD     --> input: LINK_LIBRARIES or INTERFACE_LINK_LIBRARIES (keyword used with get_target_properties)
