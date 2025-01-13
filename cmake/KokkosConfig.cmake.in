@@ -54,7 +54,7 @@ endif()
 
 if(NOT DEFINED Kokkos_GLOBAL_COMPILATION)
   set(Kokkos_GLOBAL_COMPILATION ON
-      CACHE BOOL "Weather Kokkos sets source and target properties globally via a deferred call"
+      CACHE BOOL "Whether Kokkos sets source and target properties globally via a deferred call"
   )
 endif()
 
