@@ -139,7 +139,7 @@ jobs:
         run: ctest --output-on-failure
       - name: Test linking against build dir
         if: ${{ !contains(matrix.cxx_extra_flags, '-fsanitize=address') }}
-        working-directory: example/build_cmake_installed
+        working-directory: example/build_installed
         run: |
           cmake -B builddir_buildtree -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DKokkos_ROOT=../../builddir
           cmake --build builddir_buildtree
@@ -150,7 +150,7 @@ jobs:
         run: sudo cmake --build builddir --target install
       - name: Test install
         if: ${{ !contains(matrix.cxx_extra_flags, '-fsanitize=address') }}
-        working-directory: example/build_cmake_installed
+        working-directory: example/build_installed
         run: |
           cmake -B builddir -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
           cmake --build builddir
