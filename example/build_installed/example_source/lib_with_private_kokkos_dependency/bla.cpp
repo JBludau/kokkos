@@ -14,5 +14,5 @@
 //
 //@HEADER
 
-#include <cstdio>
-void print_bla() { printf("Hello From bla\n"); }
+#include <iostream>
+void print_bla() { std::cout << "Hello From bla\n"; }

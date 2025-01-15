@@ -14,5 +14,5 @@
 //
 //@HEADER
 
-#include <cstdio>
-void print_cxx() { printf("Hello From C++\n"); }
+#include <iostream>
+void print_cxx() { std::cout << "Hello From C++\n"; }
