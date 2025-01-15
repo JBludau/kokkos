@@ -13,11 +13,15 @@ add_subdirectory(lib_with_private_kokkos_dependency)
 add_subdirectory(lib_depending_on_lib_with_private_kokkos_dependency)
 
 # create an executable that uses kokkos in interfaces
-add_executable(${PROJECT_NAME}_executable_public_kokkos ../example_source/example_public_kokkos.cpp ../example_source/bar.cpp ../example_source/foo.f
+add_executable(
+  ${PROJECT_NAME}_executable_public_kokkos ../example_source/example_public_kokkos.cpp ../example_source/bar.cpp
+                                           ../example_source/foo.f
 )
 
 # create an executable that does not use kokkos in interfaces
-add_executable(${PROJECT_NAME}_executable_private_kokkos ../example_source/example_private_kokkos.cpp ../example_source/bar.cpp ../example_source/foo.f
+add_executable(
+  ${PROJECT_NAME}_executable_private_kokkos ../example_source/example_private_kokkos.cpp ../example_source/bar.cpp
+                                            ../example_source/foo.f
 )
 
 # for LLVMFlang we need to use fortran for linking
@@ -30,12 +34,16 @@ endif()
 
 #link your executable to the libraries
 target_link_libraries(
-  ${PROJECT_NAME}_executable_public_kokkos ${PROJECT_NAME}_Lib_without_kokkos_dependency ${PROJECT_NAME}_Lib_with_public_kokkos_dependency
-  ${PROJECT_NAME}_Lib_with_private_kokkos_dependency ${PROJECT_NAME}_Lib_depending_on_lib_with_public_kokkos_dependency
+  ${PROJECT_NAME}_executable_public_kokkos
+  ${PROJECT_NAME}_Lib_without_kokkos_dependency
+  ${PROJECT_NAME}_Lib_with_public_kokkos_dependency
+  ${PROJECT_NAME}_Lib_with_private_kokkos_dependency
+  ${PROJECT_NAME}_Lib_depending_on_lib_with_public_kokkos_dependency
   ${PROJECT_NAME}_Lib_depending_on_lib_with_public_kokkos_dependency
 )
 target_link_libraries(
-  ${PROJECT_NAME}_executable_private_kokkos ${PROJECT_NAME}_Lib_without_kokkos_dependency ${PROJECT_NAME}_Lib_with_private_kokkos_dependency
+  ${PROJECT_NAME}_executable_private_kokkos ${PROJECT_NAME}_Lib_without_kokkos_dependency
+  ${PROJECT_NAME}_Lib_with_private_kokkos_dependency
   ${PROJECT_NAME}_Lib_depending_on_lib_with_private_kokkos_dependency
 )
 

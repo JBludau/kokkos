@@ -3,7 +3,7 @@ find_package(Kokkos)
 
 add_library(
   ${PROJECT_NAME}_Lib_with_private_kokkos_dependency ../../example_source/lib_with_private_kokkos_dependency/furr.cpp
-                                     ../../example_source/lib_with_private_kokkos_dependency/bla.cpp
+                                                     ../../example_source/lib_with_private_kokkos_dependency/bla.cpp
 )
 # manually mark files that use kokkos
 kokkos_set_source_and_target_properties(
