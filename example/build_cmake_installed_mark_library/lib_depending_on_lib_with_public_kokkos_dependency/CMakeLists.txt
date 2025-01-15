@@ -1,6 +1,0 @@
-add_library(
-  Lib_depending_on_lib_with_public_kokkos_dependency
-  ../../example_source/lib_depending_on_lib_with_public_kokkos_dependency/fupp.cpp
-)
-
-target_link_libraries(Lib_depending_on_lib_with_public_kokkos_dependency Lib_with_public_kokkos_dependency)
