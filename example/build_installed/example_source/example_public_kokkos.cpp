@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
   print_fortran_();
   print_foo();
   print_fuzz(Kokkos::View<int*>{"testview", 10});
+  print_fupp();
 
   Kokkos::finalize();
 
