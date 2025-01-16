@@ -22,6 +22,7 @@
 extern "C" void print_fortran_();
 void print_fuzz(Kokkos::View<int*>);
 void print_foo();
+void print_fupp();
 
 struct CountFunctor {
   KOKKOS_FUNCTION void operator()(const long i, long& lcount) const {
