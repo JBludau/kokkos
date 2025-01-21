@@ -243,13 +243,9 @@ endfunction()
 #
 function(kokkos_get_directory_targets FOUND_COMPILE_TARGETS FOUND_LINK_TARGETS DEPENDENT_LIBRARY SEARCH_DIR)
 
-  # recursively visit subdirs
-  get_property(subdirs DIRECTORY ${SEARCH_DIR} PROPERTY SUBDIRECTORIES)
-  foreach(subdir ${subdirs})
-    kokkos_get_directory_targets(subdir_compile_targets subdir_link_targets ${DEPENDENT_LIBRARY} ${subdir})
-    list(APPEND compile_targets ${subdir_compile_targets})
-    list(APPEND link_targets ${subdir_link_targets})
-  endforeach()
+  #start with empty lists in each dir
+  set(compile_targets "")
+  set(link_targets "")
 
   #check if target compiles with or links to Kokkos::kokkos
   get_property(parent_targets DIRECTORY ${SEARCH_DIR} PROPERTY BUILDSYSTEM_TARGETS)
@@ -264,12 +260,22 @@ function(kokkos_get_directory_targets FOUND_COMPILE_TARGETS FOUND_LINK_TARGETS D
 
     kokkos_check_dependency(compile_dependency INTERFACE_LINK_LIBRARIES ${DEPENDENT_LIBRARY} ${target})
     kokkos_check_dependency(link_dependency LINK_LIBRARIES ${DEPENDENT_LIBRARY} ${target})
-    if(compile_dependency)
+    if(compile_dependency AND NOT(${target} IN_LIST compile_targets ))
       list(APPEND compile_targets ${target})
     endif()
-    if(link_dependency)
+    if(link_dependency AND NOT(${target} IN_LIST link_targets ))
       list(APPEND link_targets ${target})
     endif()
+  endforeach()
+
+  # recursively visit subdirs
+  get_property(subdirs DIRECTORY ${SEARCH_DIR} PROPERTY SUBDIRECTORIES)
+  foreach(subdir ${subdirs})
+    set(subdir_compile_targets "")
+    set(subdir_link_targets "")
+    kokkos_get_directory_targets(subdir_compile_targets subdir_link_targets ${DEPENDENT_LIBRARY} ${subdir})
+    list(APPEND compile_targets ${subdir_compile_targets})
+    list(APPEND link_targets ${subdir_link_targets})
   endforeach()
 
   # push results out of recursive function
