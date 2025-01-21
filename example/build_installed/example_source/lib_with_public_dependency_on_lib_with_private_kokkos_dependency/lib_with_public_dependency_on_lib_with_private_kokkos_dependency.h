@@ -14,15 +14,19 @@
 //
 //@HEADER
 
-#include <Kokkos_Core.hpp>
-#include <iostream>
+#ifndef LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_PRIVATE_KOKKOS_DEPENDENCY
+#define LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_PRIVATE_KOKKOS_DEPENDENCY
 
-void print_furr() {
-  Kokkos::initialize();
-  Kokkos::print_configuration(std::cout);
+#include <lib_with_private_kokkos_dependency.h>
 
-  std::cout
-      << "Hello from furr within library with private kokkos dependency \n";
+namespace lib_with_public_dependency_on_lib_with_private_kokkos_dependency {
 
-  Kokkos::finalize();
-}
+void initialize();
+
+void finalize();
+
+void print(
+    lib_with_private_kokkos_dependency::StructOfLibWithPrivateKokkosDependency);
+
+}  // namespace lib_with_public_dependency_on_lib_with_private_kokkos_dependency
+#endif

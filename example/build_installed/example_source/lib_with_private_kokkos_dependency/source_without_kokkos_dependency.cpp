@@ -14,12 +14,14 @@
 //
 //@HEADER
 
+#include "header_without_kokkos_dependency.h"
 #include <iostream>
 
-void print_furr();
+namespace lib_with_private_kokkos_dependency {
 
-void print_full() {
-  print_furr();
-  std::cout << "Hello from full within library depending on library with "
-               "private kokkos dependency \n";
+void print_non_kokkos() {
+  std::cout << "Hello from non-kokkos function inside "
+               "lib_with_private_kokkos_dependency\n";
 }
+
+}  // namespace lib_with_private_kokkos_dependency

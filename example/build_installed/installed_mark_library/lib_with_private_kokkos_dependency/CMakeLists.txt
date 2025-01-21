@@ -15,4 +15,4 @@ target_link_libraries(${PROJECT_NAME}_Lib_with_private_kokkos_dependency PRIVATE
 kokkos_set_source_and_target_properties(TARGET ${PROJECT_NAME}_Lib_with_private_kokkos_dependency)
 
 # mark all targets that link to the library downstream
-kokkos_defer_set_dependent_library_properties(LIBRARY ${PROJECT_NAME}_Lib_with_private_kokkos_dependency)
+# kokkos_defer_set_dependent_library_properties(LIBRARY ${PROJECT_NAME}_Lib_with_private_kokkos_dependency)

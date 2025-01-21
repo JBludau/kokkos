@@ -14,10 +14,16 @@
 //
 //@HEADER
 
-#include <Kokkos_Core.hpp>
-#include <iostream>
+#ifndef HEADER_WITH_PRIVATE_KOKKOS_DEPENDENCY
+#define HEADER_WITH_PRIVATE_KOKKOS_DEPENDENCY
 
-void print_fuzz(Kokkos::View<int*> a) {
-  std::cout
-      << "Hello from fuzz within library with public kokkos dependency \n";
-}
+namespace lib_with_private_kokkos_dependency {
+
+void initialize();
+
+void finalize();
+
+void print_kokkos();
+
+}  // namespace lib_with_private_kokkos_dependency
+#endif

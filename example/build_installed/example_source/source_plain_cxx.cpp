@@ -16,4 +16,4 @@
 
 #include <iostream>
 
-void print_cxx() { std::cout << "Hello From C++\n"; }
+void print_plain_cxx() { std::cout << "Hello From C++\n"; }

@@ -14,12 +14,14 @@
 //
 //@HEADER
 
-#include <iostream>
+#ifndef HEADER_WITHOUT_KOKKOS_DEPENDENCY
+#define HEADER_WITHOUT_KOKKOS_DEPENDENCY
 
-void print_fuzz();
+namespace lib_with_private_kokkos_dependency {
 
-void print_fupp() {
-  print_fuzz();
-  std::cout << "Hello from full within library depending on library with "
-               "public kokkos dependency \n";
-}
+void print_non_kokkos();
+
+struct StructOfLibWithPrivateKokkosDependency {};
+
+}  // namespace lib_with_private_kokkos_dependency
+#endif

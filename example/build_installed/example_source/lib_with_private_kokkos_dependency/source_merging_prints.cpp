@@ -14,8 +14,13 @@
 //
 //@HEADER
 
-#include <iostream>
+#include "lib_with_private_kokkos_dependency.h"
 
-void print_foo() {
-  std::cout << "Hello from foo within library without kokkos dependency \n";
+namespace lib_with_private_kokkos_dependency {
+
+void print() {
+  print_non_kokkos();
+  print_kokkos();
 }
+
+}  // namespace lib_with_private_kokkos_dependency

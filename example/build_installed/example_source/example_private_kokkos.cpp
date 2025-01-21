@@ -14,15 +14,52 @@
 //
 //@HEADER
 
+#include <lib_without_kokkos_dependency.h>
+#include <lib_with_private_kokkos_dependency.h>
+#include <lib_with_public_dependency_on_lib_with_private_kokkos_dependency.h>
+#include <lib_with_private_dependency_on_lib_with_private_kokkos_dependency.h>
+#include <lib_with_private_dependency_on_lib_with_public_kokkos_dependency.h>
+
 #include <cstdio>
 #include <iostream>
 
 extern "C" void print_fortran_();
-void print_furr();
-void print_foo();
+void print_plain_cxx();
 
 int main(int argc, char* argv[]) {
-  print_furr();
-  print_foo();
+  lib_without_kokkos_dependency::print();
+
+  lib_with_private_kokkos_dependency::initialize();
+  {
+    lib_with_public_dependency_on_lib_with_private_kokkos_dependency::
+        initialize();
+    {
+      lib_with_public_dependency_on_lib_with_private_kokkos_dependency::print(
+          lib_with_private_kokkos_dependency::
+              StructOfLibWithPrivateKokkosDependency{});
+    }
+    lib_with_public_dependency_on_lib_with_private_kokkos_dependency::
+        finalize();
+
+    lib_with_private_dependency_on_lib_with_private_kokkos_dependency::
+        initialize();
+    {
+      lib_with_private_dependency_on_lib_with_private_kokkos_dependency::
+          print();
+    }
+    lib_with_private_dependency_on_lib_with_private_kokkos_dependency::
+        finalize();
+
+    lib_with_private_dependency_on_lib_with_public_kokkos_dependency::
+        initialize();
+    {
+      lib_with_private_dependency_on_lib_with_public_kokkos_dependency::print();
+    }
+    lib_with_private_dependency_on_lib_with_public_kokkos_dependency::
+        finalize();
+  }
+  lib_with_private_kokkos_dependency::finalize();
+
   print_fortran_();
+  print_plain_cxx();
 }

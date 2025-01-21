@@ -14,15 +14,15 @@
 //
 //@HEADER
 
+#include <lib_with_public_kokkos_dependency.h>
+
 #include <Kokkos_Core.hpp>
 
 #include <cstdio>
 #include <iostream>
 
 extern "C" void print_fortran_();
-void print_fuzz(Kokkos::View<int*>);
-void print_foo();
-void print_fupp();
+void print_kokkos();
 
 struct CountFunctor {
   KOKKOS_FUNCTION void operator()(const long i, long& lcount) const {
@@ -31,46 +31,50 @@ struct CountFunctor {
 };
 
 int main(int argc, char* argv[]) {
-  Kokkos::initialize(argc, argv);
-  Kokkos::DefaultExecutionSpace().print_configuration(std::cout);
-
-  if (argc < 2) {
-    fprintf(stderr, "Usage: %s [<kokkos_options>] <size>\n", argv[0]);
-    Kokkos::finalize();
-    exit(1);
-  }
-
-  const long n = strtol(argv[1], nullptr, 10);
-
-  printf("Number of even integers from 0 to %ld\n", n - 1);
-
-  Kokkos::Timer timer;
-  timer.reset();
-
-  // Compute the number of even integers from 0 to n-1, in parallel.
-  long count = 0;
-  CountFunctor functor;
-  Kokkos::parallel_reduce(n, functor, count);
-
-  double count_time = timer.seconds();
-  printf("  Parallel: %ld    %10.6f\n", count, count_time);
-
-  timer.reset();
-
-  // Compare to a sequential loop.
+  long count     = 0;
   long seq_count = 0;
-  for (long i = 0; i < n; ++i) {
-    seq_count += (i % 2) == 0;
+  Kokkos::initialize(argc, argv);
+  {
+    Kokkos::DefaultExecutionSpace().print_configuration(std::cout);
+    if (argc < 2) {
+      fprintf(stderr, "Usage: %s [<kokkos_options>] <size>\n", argv[0]);
+      Kokkos::finalize();
+      exit(1);
+    }
+
+    const long n = strtol(argv[1], nullptr, 10);
+
+    printf("Number of even integers from 0 to %ld\n", n - 1);
+
+    Kokkos::Timer timer;
+    timer.reset();
+
+    // Compute the number of even integers from 0 to n-1, in parallel.
+    CountFunctor functor;
+    Kokkos::parallel_reduce(n, functor, count);
+
+    double count_time = timer.seconds();
+    printf("  Parallel: %ld    %10.6f\n", count, count_time);
+
+    timer.reset();
+
+    // Compare to a sequential loop.
+    for (long i = 0; i < n; ++i) {
+      seq_count += (i % 2) == 0;
+    }
+
+    count_time = timer.seconds();
+    printf("Sequential: %ld    %10.6f\n", seq_count, count_time);
+
+    print_fortran_();
+    print_kokkos();
+    lib_with_public_kokkos_dependency::initialize();
+    {
+      lib_with_public_kokkos_dependency::print(
+          Kokkos::View<int*>{"testview", 10});
+    }
+    lib_with_public_kokkos_dependency::finalize();
   }
-
-  count_time = timer.seconds();
-  printf("Sequential: %ld    %10.6f\n", seq_count, count_time);
-
-  print_fortran_();
-  print_foo();
-  print_fuzz(Kokkos::View<int*>{"testview", 10});
-  print_fupp();
-
   Kokkos::finalize();
 
   return (count == seq_count) ? 0 : -1;

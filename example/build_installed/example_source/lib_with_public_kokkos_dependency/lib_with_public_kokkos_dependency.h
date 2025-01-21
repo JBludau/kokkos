@@ -14,6 +14,23 @@
 //
 //@HEADER
 
-#include <iostream>
+#ifndef LIB_WITH_PUBLIC_KOKKOS_DEPENDENCY
+#define LIB_WITH_PUBLIC_KOKKOS_DEPENDENCY
 
-void print_bla() { std::cout << "Hello From bla\n"; }
+#include <Kokkos_Core.hpp>
+
+namespace lib_with_public_kokkos_dependency {
+
+void initialize();
+
+void finalize();
+
+void print(Kokkos::View<int*> a);
+
+struct StructOfLibWithPublicKokkosDependency {
+  Kokkos::View<int*> value;
+};
+
+}  // namespace lib_with_public_kokkos_dependency
+
+#endif
