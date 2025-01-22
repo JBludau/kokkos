@@ -41,6 +41,8 @@ add_executable(
   ${PROJECT_NAME}_executable_private_kokkos ../example_source/example_private_kokkos.cpp ../example_source/source_plain_cxx.cpp
                                             ../example_source/source_plain_fortran.f
 )
+# it still links to Kokkos so it has to be marked for linkage
+kokkos_set_source_and_target_properties(LINK_ONLY_TARGET ${PROJECT_NAME}_executable_private_kokkos)
 
 # for LLVMFlang we need to use fortran for linking
 if(CMAKE_Fortran_COMPILER_ID STREQUAL LLVMFlang)
