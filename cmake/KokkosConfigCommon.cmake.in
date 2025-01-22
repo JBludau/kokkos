@@ -209,78 +209,93 @@ int main()
   set(${_VAR} ${_RET} PARENT_SCOPE)
 endfunction()
 
-# this function searches a given target recursively looking for a transitive dependency to Kokkos
+# this function searches a given target recursively looking for a transitive compile dependency to DEPENDENT_LIBRARY
 #
-#       FOUND_DEPENDENCY    --> output: is set to ON if a dependency to kokkos is found
-#       LIBRARY_KEYWORD     --> input: LINK_LIBRARIES or INTERFACE_LINK_LIBRARIES (keyword used with get_target_properties)
+#       COMPILE_DEPENDENCY                --> output: is set to ON if the target needs to be compiled with the requirements of DEPENDENT_LIBRARY
+#       TRANSITIVE_COMPILE_DEPENDENCY     --> output: is set to ON if the target infects targets that depend PUBLIC on it to need to be compiled with the requirements of DEPENDENT_LIBRARY
+#       DEPENDENT_LIBRARY                 --> input: The library to search for in the target properties
+#       INVESTIGATED_TARGET               --> input: target to be checked for transitive dependency
+#
+function(kokkos_check_compile_dependency COMPILE_DEPENDENCY TRANSITIVE_COMPILE_DEPENDENCY DEPENDENT_LIBRARY INVESTIGATED_TARGET)
+  set(transitive_dependency OFF)
+  set(compile_dependency OFF)
+  if(TARGET ${INVESTIGATED_TARGET})
+    get_target_property(target_link_dependencies ${INVESTIGATED_TARGET} LINK_LIBRARIES)
+    get_target_property(target_interface_dependencies ${INVESTIGATED_TARGET} INTERFACE_LINK_LIBRARIES)
+    if(target_link_dependencies)
+      #check the target directly
+      if (${DEPENDENT_LIBRARY} IN_LIST target_link_dependencies)
+          set(compile_dependency ON)
+        if (${DEPENDENT_LIBRARY} IN_LIST target_interface_dependencies)
+          set(transitive_dependency ON)
+        endif()
+      #if no direct dependency is found check all dependencies
+      else()
+        foreach(dependency IN LISTS target_link_dependencies)
+          kokkos_check_compile_dependency(depends_direct depends_transitively ${DEPENDENT_LIBRARY} ${dependency})
+          #if a dependency is infectious
+          if(depends_transitively)
+            set(compile_dependency ON)
+            #and if we link PUBLIC to it we get infectious, too
+            if (${dependency} IN_LIST target_interface_dependencies)
+              set(transitive_dependency ON)
+            endif()
+          endif()
+        endforeach()
+      endif()
+    endif()
+  endif()
+
+  set(${COMPILE_DEPENDENCY} ${compile_dependency} PARENT_SCOPE)
+  set(${TRANSITIVE_COMPILE_DEPENDENCY} ${transitive_dependency} PARENT_SCOPE)
+endfunction()
+
+# this function searches a given target recursively looking for a transitive link dependency to DEPENDENT_LIBRARY
+#
+#       LINK_DEPENDENCY     --> output: is set to ON if the target needs to be linked with the requirements of DEPENDENT_LIBRARY
 #       DEPENDENT_LIBRARY   --> input: The library to search for in the target properties
 #       INVESTIGATED_TARGET --> input: target to be checked for transitive dependency
 #
-function(kokkos_check_dependency FOUND_DEPENDENCY LIBRARY_KEYWORD DEPENDENT_LIBRARY INVESTIGATED_TARGET)
+function(kokkos_check_link_dependency LINK_DEPENDENCY DEPENDENT_LIBRARY INVESTIGATED_TARGET)
+  set(link_dependency OFF)
   if(TARGET ${INVESTIGATED_TARGET})
-    get_target_property(target_dependencies ${INVESTIGATED_TARGET} ${LIBRARY_KEYWORD})
-    if(target_dependencies)
-      foreach(dependency IN LISTS target_dependencies)
-        kokkos_check_dependency(depends_transitively ${LIBRARY_KEYWORD} ${DEPENDENT_LIBRARY} ${dependency})
-        if(depends_transitively)
-          set(transitive_dependency ON)
-        endif()
-      endforeach()
-    endif()
-
-    if(${DEPENDENT_LIBRARY} IN_LIST target_dependencies OR transitive_dependency)
-      set(${FOUND_DEPENDENCY} ON PARENT_SCOPE)
+    get_target_property(target_link_dependencies ${INVESTIGATED_TARGET} LINK_LIBRARIES)
+    if(target_link_dependencies)
+      if (${DEPENDENT_LIBRARY} IN_LIST target_link_dependencies)
+        set(link_dependency ON)
+      else()
+        foreach(dependency IN LISTS target_link_dependencies)
+          kokkos_check_link_dependency(depends_for_linking ${DEPENDENT_LIBRARY} ${dependency})
+          if(depends_for_linking)
+            set(link_dependency ON)
+          endif()
+        endforeach()
+      endif()
     endif()
   endif()
+
+  set(${LINK_DEPENDENCY} ${link_dependency} PARENT_SCOPE)
 endfunction()
 
-# this function searches a given directory recursively finding all targets that link to kokkos
+# this function searches a given directory recursively finding all targets that link to DEPENDENT_LIBRARY
 #
-#       FOUND_COMPILE_TARGETS --> output: all found targets that link to kokkos and need our compiler
-#       FOUND_LINK_TARGETS    --> output: all found targets that link to kokkos and need our linker
+#       FOUND_TARGETS         --> output: all found targets that link to kokkos and need our compiler
 #       DEPENDENT_LIBRARY     --> input: The library to search for in the target properties
 #       SEARCH_DIR            --> input: the root dir to start the recursion from
 #
-function(kokkos_get_directory_targets FOUND_COMPILE_TARGETS FOUND_LINK_TARGETS DEPENDENT_LIBRARY SEARCH_DIR)
+function(kokkos_get_directory_targets FOUND_TARGETS SEARCH_DIR)
 
-  #start with empty lists in each dir
-  set(compile_targets "")
-  set(link_targets "")
-
-  #check if target compiles with or links to Kokkos::kokkos
-  get_property(parent_targets DIRECTORY ${SEARCH_DIR} PROPERTY BUILDSYSTEM_TARGETS)
-  foreach(target IN LISTS parent_targets)
-    set(compile_dependency OFF)
-    set(link_dependency OFF)
-    # if a target lists Kokkos::kokkos in the libs it will have to be compiled with our settings no matter private/public/interface
-    get_target_property(dependencies ${target} LINK_LIBRARIES)
-    if(${DEPENDENT_LIBRARY} IN_LIST dependencies)
-      set(compile_dependency ON)
-    endif()
-
-    kokkos_check_dependency(compile_dependency INTERFACE_LINK_LIBRARIES ${DEPENDENT_LIBRARY} ${target})
-    kokkos_check_dependency(link_dependency LINK_LIBRARIES ${DEPENDENT_LIBRARY} ${target})
-    if(compile_dependency AND NOT(${target} IN_LIST compile_targets ))
-      list(APPEND compile_targets ${target})
-    endif()
-    if(link_dependency AND NOT(${target} IN_LIST link_targets ))
-      list(APPEND link_targets ${target})
-    endif()
-  endforeach()
+  get_property(targets DIRECTORY ${SEARCH_DIR} PROPERTY BUILDSYSTEM_TARGETS)
 
   # recursively visit subdirs
   get_property(subdirs DIRECTORY ${SEARCH_DIR} PROPERTY SUBDIRECTORIES)
   foreach(subdir ${subdirs})
-    set(subdir_compile_targets "")
-    set(subdir_link_targets "")
-    kokkos_get_directory_targets(subdir_compile_targets subdir_link_targets ${DEPENDENT_LIBRARY} ${subdir})
-    list(APPEND compile_targets ${subdir_compile_targets})
-    list(APPEND link_targets ${subdir_link_targets})
+    kokkos_get_directory_targets(subdir_targets ${subdir})
+    list(APPEND targets ${subdir_targets})
   endforeach()
 
   # push results out of recursive function
-  set(${FOUND_COMPILE_TARGETS} ${compile_targets} PARENT_SCOPE)
-  set(${FOUND_LINK_TARGETS} ${link_targets} PARENT_SCOPE)
+  set(${FOUND_TARGETS} ${targets} PARENT_SCOPE)
 endfunction()
 
 # this function sets the source and target properties for all targets that link to a given library
@@ -436,9 +451,20 @@ function(kokkos_set_source_and_target_properties)
 
   #set properties on directories
   foreach(directory IN LISTS INP_DIRECTORY)
-    kokkos_get_directory_targets(DIRECTORY_COMPILE_TARGETS DIRECTORY_LINK_TARGETS Kokkos::kokkos ${directory})
-    list(APPEND COMPILE_TARGETS ${DIRECTORY_COMPILE_TARGETS})
-    list(APPEND LINK_TARGETS ${DIRECTORY_LINK_TARGETS})
+    kokkos_get_directory_targets(DIRECTORY_TARGETS ${directory})
+
+    foreach(directory_target IN LISTS DIRECTORY_TARGETS)
+      kokkos_check_compile_dependency(compile_dependency transitive_compile_dependency Kokkos::kokkos ${directory_target})
+      if(compile_dependency)
+        list(APPEND DIRECTORY_COMPILE_TARGETS ${directory_target})
+        list(APPEND COMPILE_TARGETS ${directory_target})
+      endif()
+
+      kokkos_check_link_dependency(link_dependency Kokkos::kokkos ${directory_target})
+      if(link_dependency)
+        list(APPEND LINK_TARGETS ${directory_target})
+      endif()
+    endforeach()
 
     # set all cpp,cxx sources in the found targets to the correct language
     if(@Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE@)
