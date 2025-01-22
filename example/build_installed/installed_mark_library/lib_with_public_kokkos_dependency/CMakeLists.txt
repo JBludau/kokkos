@@ -2,15 +2,19 @@ set(Kokkos_GLOBAL_COMPILATION OFF)
 find_package(Kokkos)
 
 add_library(
-  ${PROJECT_NAME}_Lib_with_public_kokkos_dependency ../../example_source/lib_with_public_kokkos_dependency/source_with_public_kokkos_dependency.cpp
+  ${PROJECT_NAME}_Lib_with_public_kokkos_dependency
+  ../../example_source/lib_with_public_kokkos_dependency/source_with_public_kokkos_dependency.cpp
 )
 
 # manually mark files that use kokkos
 kokkos_set_source_and_target_properties(
-  SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/../../example_source/lib_with_public_kokkos_dependency/source_with_public_kokkos_dependency.cpp
+  SOURCE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../example_source/lib_with_public_kokkos_dependency/source_with_public_kokkos_dependency.cpp
 )
 
-target_include_directories(${PROJECT_NAME}_Lib_with_public_kokkos_dependency PUBLIC ../../example_source/lib_with_public_kokkos_dependency)
+target_include_directories(
+  ${PROJECT_NAME}_Lib_with_public_kokkos_dependency PUBLIC ../../example_source/lib_with_public_kokkos_dependency
+)
 target_link_libraries(${PROJECT_NAME}_Lib_with_public_kokkos_dependency PUBLIC Kokkos::kokkos)
 
 # mark target as a kokkos target

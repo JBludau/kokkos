@@ -25,8 +25,9 @@ add_subdirectory(lib_with_public_dependency_on_lib_with_public_kokkos_dependency
 
 # create an executable that uses kokkos in interfaces
 add_executable(
-  ${PROJECT_NAME}_executable_public_kokkos ../example_source/example_public_kokkos.cpp ../example_source/source_with_kokkos_dependency.cpp
-                                           ../example_source/source_plain_fortran.f
+  ${PROJECT_NAME}_executable_public_kokkos
+  ../example_source/example_public_kokkos.cpp ../example_source/source_with_kokkos_dependency.cpp
+  ../example_source/source_plain_fortran.f
 )
 
 # as kokkos is used in the interface, the files and target have to be marked
@@ -38,8 +39,9 @@ kokkos_set_source_and_target_properties(TARGET ${PROJECT_NAME}_executable_public
 
 # create an executable that does not use kokkos in interfaces
 add_executable(
-  ${PROJECT_NAME}_executable_private_kokkos ../example_source/example_private_kokkos.cpp ../example_source/source_plain_cxx.cpp
-                                            ../example_source/source_plain_fortran.f
+  ${PROJECT_NAME}_executable_private_kokkos
+  ../example_source/example_private_kokkos.cpp ../example_source/source_plain_cxx.cpp
+  ../example_source/source_plain_fortran.f
 )
 # it still links to Kokkos so it has to be marked for linkage
 kokkos_set_source_and_target_properties(LINK_ONLY_TARGET ${PROJECT_NAME}_executable_private_kokkos)

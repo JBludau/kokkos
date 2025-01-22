@@ -16,14 +16,16 @@ add_subdirectory(lib_with_public_dependency_on_lib_with_public_kokkos_dependency
 
 # create an executable that uses kokkos in interfaces
 add_executable(
-  ${PROJECT_NAME}_executable_public_kokkos ../example_source/example_public_kokkos.cpp ../example_source/source_with_kokkos_dependency.cpp
-                                           ../example_source/source_plain_fortran.f
+  ${PROJECT_NAME}_executable_public_kokkos
+  ../example_source/example_public_kokkos.cpp ../example_source/source_with_kokkos_dependency.cpp
+  ../example_source/source_plain_fortran.f
 )
 
 # create an executable that does not use kokkos in interfaces
 add_executable(
-  ${PROJECT_NAME}_executable_private_kokkos ../example_source/example_private_kokkos.cpp ../example_source/source_plain_cxx.cpp
-                                            ../example_source/source_plain_fortran.f
+  ${PROJECT_NAME}_executable_private_kokkos
+  ../example_source/example_private_kokkos.cpp ../example_source/source_plain_cxx.cpp
+  ../example_source/source_plain_fortran.f
 )
 
 # for LLVMFlang we need to use fortran for linking
