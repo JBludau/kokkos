@@ -216,7 +216,9 @@ endfunction()
 #       DEPENDENT_LIBRARY                 --> input: The library to search for in the target properties
 #       INVESTIGATED_TARGET               --> input: target to be checked for transitive dependency
 #
-function(kokkos_check_compile_dependency COMPILE_DEPENDENCY TRANSITIVE_COMPILE_DEPENDENCY DEPENDENT_LIBRARY INVESTIGATED_TARGET)
+function(kokkos_check_compile_dependency COMPILE_DEPENDENCY TRANSITIVE_COMPILE_DEPENDENCY DEPENDENT_LIBRARY
+         INVESTIGATED_TARGET
+)
   set(transitive_dependency OFF)
   set(compile_dependency OFF)
   if(TARGET ${INVESTIGATED_TARGET})
@@ -224,12 +226,12 @@ function(kokkos_check_compile_dependency COMPILE_DEPENDENCY TRANSITIVE_COMPILE_D
     get_target_property(target_interface_dependencies ${INVESTIGATED_TARGET} INTERFACE_LINK_LIBRARIES)
     if(target_link_dependencies)
       #check the target directly
-      if (${DEPENDENT_LIBRARY} IN_LIST target_link_dependencies)
-          set(compile_dependency ON)
-        if (${DEPENDENT_LIBRARY} IN_LIST target_interface_dependencies)
+      if(${DEPENDENT_LIBRARY} IN_LIST target_link_dependencies)
+        set(compile_dependency ON)
+        if(${DEPENDENT_LIBRARY} IN_LIST target_interface_dependencies)
           set(transitive_dependency ON)
         endif()
-      #if no direct dependency is found check all dependencies
+        #if no direct dependency is found check all dependencies
       else()
         foreach(dependency IN LISTS target_link_dependencies)
           kokkos_check_compile_dependency(depends_direct depends_transitively ${DEPENDENT_LIBRARY} ${dependency})
@@ -237,7 +239,7 @@ function(kokkos_check_compile_dependency COMPILE_DEPENDENCY TRANSITIVE_COMPILE_D
           if(depends_transitively)
             set(compile_dependency ON)
             #and if we link PUBLIC to it we get infectious, too
-            if (${dependency} IN_LIST target_interface_dependencies)
+            if(${dependency} IN_LIST target_interface_dependencies)
               set(transitive_dependency ON)
             endif()
           endif()
@@ -261,7 +263,7 @@ function(kokkos_check_link_dependency LINK_DEPENDENCY DEPENDENT_LIBRARY INVESTIG
   if(TARGET ${INVESTIGATED_TARGET})
     get_target_property(target_link_dependencies ${INVESTIGATED_TARGET} LINK_LIBRARIES)
     if(target_link_dependencies)
-      if (${DEPENDENT_LIBRARY} IN_LIST target_link_dependencies)
+      if(${DEPENDENT_LIBRARY} IN_LIST target_link_dependencies)
         set(link_dependency ON)
       else()
         foreach(dependency IN LISTS target_link_dependencies)
@@ -468,7 +470,9 @@ function(kokkos_set_source_and_target_properties)
     kokkos_get_directory_targets(DIRECTORY_TARGETS ${directory})
 
     foreach(directory_target IN LISTS DIRECTORY_TARGETS)
-      kokkos_check_compile_dependency(compile_dependency transitive_compile_dependency Kokkos::kokkos ${directory_target})
+      kokkos_check_compile_dependency(
+        compile_dependency transitive_compile_dependency Kokkos::kokkos ${directory_target}
+      )
       if(compile_dependency)
         list(APPEND DIRECTORY_COMPILE_TARGETS ${directory_target})
         list(APPEND COMPILE_TARGETS ${directory_target})
