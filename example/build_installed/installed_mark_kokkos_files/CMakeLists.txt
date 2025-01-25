@@ -5,9 +5,9 @@ cmake_minimum_required(VERSION 3.19)
 # Projects can safely mix languages - must have C++ support
 project(ExampleInstalledMarkKokkosFiles CXX Fortran)
 
-# In the top-level CMakeLists.txt ensure, that all find_package(Kokkos) calls are done without setting compilation flags for the whole project
-set(Kokkos_GLOBAL_COMPILATION OFF)
 find_package(Kokkos)
+# Opt out of kokkos setting the source and target flags automatically by excluding the whole project.
+kokkos_exclude_from_setting_build_properties(GLOBAL)
 
 # define some libs in subdirs
 add_subdirectory(lib_without_kokkos_dependency)

@@ -1,5 +1,7 @@
-set(Kokkos_GLOBAL_COMPILATION OFF)
 find_package(Kokkos)
+# exclude current dir from kokkos setting source and target properties automatically. We want to do this manually.
+kokkos_exclude_from_setting_build_properties(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
 
 add_library(
   ${PROJECT_NAME}_Lib_with_private_kokkos_dependency
@@ -22,5 +24,5 @@ target_link_libraries(${PROJECT_NAME}_Lib_with_private_kokkos_dependency PRIVATE
 # mark target as a kokkos target
 kokkos_set_source_and_target_properties(TARGET ${PROJECT_NAME}_Lib_with_private_kokkos_dependency)
 
-# mark all targets that link to the library downstream
+# build all targets with kokkos settings if they link to the current library downstream
 kokkos_defer_set_dependent_library_properties(LIBRARY ${PROJECT_NAME}_Lib_with_private_kokkos_dependency)
