@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.19)
 
 # Projects can safely mix languages - must have C++ support
-project(ExampleInstalled CXX Fortran)
+project(ExampleInstalledMarkLibrary CXX Fortran)
 
 # define some libs in subdirs
 add_subdirectory(lib_without_kokkos_dependency)
