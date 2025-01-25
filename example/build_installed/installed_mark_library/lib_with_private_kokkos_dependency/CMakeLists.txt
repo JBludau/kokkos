@@ -1,7 +1,8 @@
 find_package(Kokkos)
-# exclude current dir from kokkos setting source and target properties automatically. We want to do this manually.
-kokkos_exclude_from_setting_build_properties(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-
+# disable kokkos setting source and target properties automatically. We want to do this manually.
+# this implies that other libs in this poject can not rely on kokkos setting the properties automatically
+# see `lib_with_public_kokkos_dependency` for an example how to do this
+kokkos_exclude_from_setting_build_properties(GLOBAL)
 
 add_library(
   ${PROJECT_NAME}_Lib_with_private_kokkos_dependency
