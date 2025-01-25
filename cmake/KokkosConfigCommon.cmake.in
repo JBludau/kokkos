@@ -281,23 +281,35 @@ endfunction()
 
 # this function searches a given directory recursively finding all targets that link to DEPENDENT_LIBRARY
 #
-#       FOUND_TARGETS         --> output: all found targets that link to kokkos and need our compiler
+#       FOUND_TARGETS         --> output: list of all found targets that link to kokkos and need our compiler
 #       DEPENDENT_LIBRARY     --> input: The library to search for in the target properties
 #       SEARCH_DIR            --> input: the root dir to start the recursion from
+#       EXCLUDE_DIRS          --> input: list of directories that should be excluded
 #
-function(kokkos_get_directory_targets FOUND_TARGETS SEARCH_DIR)
+function(kokkos_get_directory_targets)
+  cmake_parse_arguments(INP "" "SEARCH_DIR" "FOUND_TARGETS;EXCLUDE_DIRS" ${ARGN})
+  set(targets "")
+  set(subdirs "")
 
-  get_property(targets DIRECTORY ${SEARCH_DIR} PROPERTY BUILDSYSTEM_TARGETS)
+  if(${INP_SEARCH_DIR} IN_LIST INP_EXCLUDE_DIRS)
+    message(DEBUG "Kokkos excludes dir ${INP_SEARCH_DIR} from setting build options as it was marked to be excluded by `kokkos_exclude_from_setting_build_properties`")
+  else()
+    get_property(targets DIRECTORY ${INP_SEARCH_DIR} PROPERTY BUILDSYSTEM_TARGETS)
+    get_property(subdirs DIRECTORY ${INP_SEARCH_DIR} PROPERTY SUBDIRECTORIES)
+  endif()
 
   # recursively visit subdirs
-  get_property(subdirs DIRECTORY ${SEARCH_DIR} PROPERTY SUBDIRECTORIES)
-  foreach(subdir ${subdirs})
-    kokkos_get_directory_targets(subdir_targets ${subdir})
-    list(APPEND targets ${subdir_targets})
-  endforeach()
+  if(subdirs)
+    foreach(subdir ${subdirs})
+        kokkos_get_directory_targets(FOUND_TARGETS subdir_targets SEARCH_DIR ${subdir} EXCLUDE_DIRS ${INP_EXCLUDE_DIRS})
+        list(APPEND targets ${subdir_targets})
+    endforeach()
+  endif()
 
   # push results out of recursive function
-  set(${FOUND_TARGETS} ${targets} PARENT_SCOPE)
+  set(${INP_FOUND_TARGETS} ${targets} PARENT_SCOPE)
+endfunction()
+
 endfunction()
 
 # this function sets the source and target properties for all targets that link to a given library
@@ -313,8 +325,7 @@ function(kokkos_set_dependent_library_properties)
     message(FATAL_ERROR "'kokkos_set_dependent_library_properties' needs a LIBRARY argument")
   endif()
 
-  # kokkos_get_directory_targets(COMPILE_TARGETS LINK_TARGETS ${INP_LIBRARY} ${PROJECT_SOURCE_DIR})
-  kokkos_get_directory_targets(DIRECTORY_TARGETS ${PROJECT_SOURCE_DIR})
+  kokkos_get_directory_targets(FOUND_TARGETS DIRECTORY_TARGETS SEARCH_DIR ${PROJECT_SOURCE_DIR})
 
   foreach(directory_target IN LISTS DIRECTORY_TARGETS)
     kokkos_check_compile_dependency(compile_dependency transitive_compile_dependency ${INP_LIBRARY} ${directory_target})
@@ -467,7 +478,7 @@ function(kokkos_set_source_and_target_properties)
 
   #set properties on directories
   foreach(directory IN LISTS INP_DIRECTORY)
-    kokkos_get_directory_targets(DIRECTORY_TARGETS ${directory})
+    kokkos_get_directory_targets(FOUND_TARGETS DIRECTORY_TARGETS SEARCH_DIR ${directory} EXCLUDE_DIRS ${Kokkos_EXCLUDE_BUILD_DIRS})
 
     foreach(directory_target IN LISTS DIRECTORY_TARGETS)
       kokkos_check_compile_dependency(
