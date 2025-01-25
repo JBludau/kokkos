@@ -478,7 +478,7 @@ function(kokkos_set_source_and_target_properties)
     endif()
   endif()
 
-  # check if the requrired language is enabled
+  # check if the required language is enabled
   if(@Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE@)
     if(NOT DEFINED CMAKE_@KOKKOS_COMPILE_LANGUAGE@_COMPILER_LOADED)
       message(
