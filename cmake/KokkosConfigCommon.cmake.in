@@ -410,7 +410,7 @@ endfunction()
 
 # this function sets the source and target properties that Kokkos requires
 #
-#       PROJECT           --> all cpp,cxx files for targets that link to kokkos in the project
+#       GLOBAL            --> all cpp,cxx files for targets that link to kokkos in the project
 #       DIRECTORY         --> all cpp,cxx files for targets that link to kokkos in given directories
 #       TARGET            --> on the given targets (that need compilation and link settings)
 #       LINK_ONLY_TARGET  --> on the given targets (that only need link settings)
@@ -419,7 +419,7 @@ endfunction()
 #
 function(kokkos_set_source_and_target_properties)
   cmake_parse_arguments(
-    INP "PROJECT" "Kokkos_FOUND_DIR" "USE_LAUNCHER;DIRECTORY;TARGET;LINK_ONLY_TARGET;SOURCE" ${ARGN}
+    INP "GLOBAL" "Kokkos_FOUND_DIR" "USE_LAUNCHER;DIRECTORY;TARGET;LINK_ONLY_TARGET;SOURCE" ${ARGN}
   )
 
   #if you passed a launcher, we will just take it without modification. If not we still use our launcher for CUDA if nvcc is not the global cxx compiler
@@ -486,10 +486,10 @@ function(kokkos_set_source_and_target_properties)
   set(LINK_TARGETS ${INP_TARGET};${INP_LINK_ONLY_TARGET})
 
   #resolve projects to directory
-  if(INP_PROJECT)
+  if(INP_GLOBAL)
     message(DEBUG "Kokkos marking directory ${PROJECT_SOURCE_DIR} to contain kokkos targets")
     list(APPEND INP_DIRECTORY ${PROJECT_SOURCE_DIR})
-    unset(INP_PROJECT)
+    unset(INP_GLOBAL)
   endif()
 
   #set properties on directories
