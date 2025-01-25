@@ -292,7 +292,10 @@ function(kokkos_get_directory_targets)
   set(subdirs "")
 
   if(${INP_SEARCH_DIR} IN_LIST INP_EXCLUDE_DIRS)
-    message(DEBUG "Kokkos excludes dir ${INP_SEARCH_DIR} from setting build options as it was marked to be excluded by `kokkos_exclude_from_setting_build_properties`")
+    message(
+      DEBUG
+      "Kokkos excludes dir ${INP_SEARCH_DIR} from setting build options as it was marked to be excluded by `kokkos_exclude_from_setting_build_properties`"
+    )
   else()
     get_property(targets DIRECTORY ${INP_SEARCH_DIR} PROPERTY BUILDSYSTEM_TARGETS)
     get_property(subdirs DIRECTORY ${INP_SEARCH_DIR} PROPERTY SUBDIRECTORIES)
@@ -301,8 +304,8 @@ function(kokkos_get_directory_targets)
   # recursively visit subdirs
   if(subdirs)
     foreach(subdir ${subdirs})
-        kokkos_get_directory_targets(FOUND_TARGETS subdir_targets SEARCH_DIR ${subdir} EXCLUDE_DIRS ${INP_EXCLUDE_DIRS})
-        list(APPEND targets ${subdir_targets})
+      kokkos_get_directory_targets(FOUND_TARGETS subdir_targets SEARCH_DIR ${subdir} EXCLUDE_DIRS ${INP_EXCLUDE_DIRS})
+      list(APPEND targets ${subdir_targets})
     endforeach()
   endif()
 
@@ -323,8 +326,13 @@ function(kokkos_exclude_from_setting_build_properties)
   if(INP_GLOBAL)
     kokkos_exclude_from_setting_build_properties(DIRECTORY ${PROJECT_SOURCE_DIR})
   else()
-    set(Kokkos_EXCLUDE_BUILD_DIRS "${INP_DIRECTORY};${Kokkos_EXCLUDE_DIRS}"
-      CACHE STRING "List of directories Kokkos that are excluded from Kokkos setting build properties on source and target properties via a deferred call" FORCE)
+    set(Kokkos_EXCLUDE_BUILD_DIRS
+        "${INP_DIRECTORY};${Kokkos_EXCLUDE_DIRS}"
+        CACHE
+          STRING
+          "List of directories Kokkos that are excluded from Kokkos setting build properties on source and target properties via a deferred call"
+          FORCE
+    )
   endif()
 endfunction()
 
@@ -418,9 +426,7 @@ endfunction()
 #       Kokkos_FOUND_DIR  --> hint on where Kokkos was installed (important for CMake contexts that don't know this but depend on Kokkos)
 #
 function(kokkos_set_source_and_target_properties)
-  cmake_parse_arguments(
-    INP "GLOBAL" "Kokkos_FOUND_DIR" "USE_LAUNCHER;DIRECTORY;TARGET;LINK_ONLY_TARGET;SOURCE" ${ARGN}
-  )
+  cmake_parse_arguments(INP "GLOBAL" "Kokkos_FOUND_DIR" "USE_LAUNCHER;DIRECTORY;TARGET;LINK_ONLY_TARGET;SOURCE" ${ARGN})
 
   #if you passed a launcher, we will just take it without modification. If not we still use our launcher for CUDA if nvcc is not the global cxx compiler
   if(NOT INP_USE_LAUNCHER)
@@ -494,7 +500,9 @@ function(kokkos_set_source_and_target_properties)
 
   #set properties on directories
   foreach(directory IN LISTS INP_DIRECTORY)
-    kokkos_get_directory_targets(FOUND_TARGETS DIRECTORY_TARGETS SEARCH_DIR ${directory} EXCLUDE_DIRS ${Kokkos_EXCLUDE_BUILD_DIRS})
+    kokkos_get_directory_targets(
+      FOUND_TARGETS DIRECTORY_TARGETS SEARCH_DIR ${directory} EXCLUDE_DIRS ${Kokkos_EXCLUDE_BUILD_DIRS}
+    )
 
     foreach(directory_target IN LISTS DIRECTORY_TARGETS)
       kokkos_check_compile_dependency(
