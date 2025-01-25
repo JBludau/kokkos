@@ -72,3 +72,9 @@ if(Kokkos_GLOBAL_COMPILATION)
 endif()
 
 set(Kokkos_COMPILE_LANGUAGE @KOKKOS_COMPILE_LANGUAGE@)
+
+if(NOT DEFINED CACHE{Kokkos_EXCLUDE_BUILD_DIRS})
+  set(Kokkos_EXCLUDE_BUILD_DIRS ""
+    CACHE STRING "List of directories Kokkos that are excluded from Kokkos setting build properties on source and target properties via a deferred call"
+  )
+endif()

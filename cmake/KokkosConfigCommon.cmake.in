@@ -310,6 +310,22 @@ function(kokkos_get_directory_targets)
   set(${INP_FOUND_TARGETS} ${targets} PARENT_SCOPE)
 endfunction()
 
+# this function searches a given directory recursively finding all targets that link to DEPENDENT_LIBRARY
+#
+#       FOUND_TARGETS         --> output: list of all found targets that link to kokkos and need our compiler
+#       DEPENDENT_LIBRARY     --> input: The library to search for in the target properties
+#       SEARCH_DIR            --> input: the root dir to start the recursion from
+#       EXCLUDE_DIRS          --> input: list of directories that should be excluded
+#
+function(kokkos_exclude_from_setting_build_properties)
+  cmake_parse_arguments(INP "GLOBAL" "" "DIRECTORY" ${ARGN})
+
+  if(INP_GLOBAL)
+    kokkos_exclude_from_setting_build_properties(DIRECTORY ${PROJECT_SOURCE_DIR})
+  else()
+    set(Kokkos_EXCLUDE_BUILD_DIRS "${INP_DIRECTORY};${Kokkos_EXCLUDE_DIRS}"
+      CACHE STRING "List of directories Kokkos that are excluded from Kokkos setting build properties on source and target properties via a deferred call" FORCE)
+  endif()
 endfunction()
 
 # this function sets the source and target properties for all targets that link to a given library
