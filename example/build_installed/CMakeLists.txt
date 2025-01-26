@@ -21,6 +21,7 @@ set(Kokkos_EXCLUDE_BUILD_DIRS
 )
 
 enable_testing()
+add_subdirectory(simple)
 add_subdirectory(complex)
 add_subdirectory(complex_mark_kokkos_files)
 add_subdirectory(complex_mark_library)
