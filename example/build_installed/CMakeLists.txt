@@ -20,6 +20,7 @@ set(Kokkos_EXCLUDE_BUILD_DIRS
       "List of directories Kokkos that are excluded from Kokkos setting build properties on source and target properties via a deferred call"
 )
 
+enable_testing()
 add_subdirectory(installed)
 add_subdirectory(installed_mark_kokkos_files)
 add_subdirectory(installed_mark_library)
