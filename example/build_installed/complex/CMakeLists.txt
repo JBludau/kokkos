@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.19)
 
 # Projects can safely mix languages - must have C++ support
-project(ExampleInstalledMarkLibrary CXX Fortran)
+project(ExampleComplex CXX Fortran)
 
 # define some libs in subdirs
 add_subdirectory(lib_without_kokkos_dependency)
@@ -52,5 +52,5 @@ target_link_libraries(
 )
 
 enable_testing()
-add_test(NAME ${PROJECT_NAME}_KokkosPublic_Verify COMMAND ${PROJECT_NAME}_excutable_public_kokkos 10)
+add_test(NAME ${PROJECT_NAME}_KokkosPublic_Verify COMMAND ${PROJECT_NAME}_executable_public_kokkos 10)
 add_test(NAME ${PROJECT_NAME}_KokkosPrivate_Verify COMMAND ${PROJECT_NAME}_executable_private_kokkos 10)

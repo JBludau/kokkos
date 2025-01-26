@@ -3,12 +3,21 @@
 cmake_minimum_required(VERSION 3.19)
 
 # Projects can safely mix languages - must have C++ support
-project(ExampleInstalled CXX Fortran)
+project(ExampleComplexMarkKokkosFiles CXX Fortran)
+
+find_package(Kokkos)
+# Opt out of kokkos setting the source and target flags automatically by excluding the whole project.
+kokkos_exclude_from_setting_build_properties(GLOBAL)
 
 # define some libs in subdirs
 add_subdirectory(lib_without_kokkos_dependency)
+
 add_subdirectory(lib_with_public_kokkos_dependency)
+kokkos_set_source_and_target_properties(DIRECTORY lib_with_public_kokkos_dependency)
 add_subdirectory(lib_with_private_kokkos_dependency)
+kokkos_set_source_and_target_properties(DIRECTORY lib_with_private_kokkos_dependency)
+
+# or more fine grained at source and target level in the respective CMakeLists.txt of the libs
 add_subdirectory(lib_with_private_dependency_on_lib_with_private_kokkos_dependency)
 add_subdirectory(lib_with_private_dependency_on_lib_with_public_kokkos_dependency)
 add_subdirectory(lib_with_public_dependency_on_lib_with_private_kokkos_dependency)
@@ -21,12 +30,21 @@ add_executable(
   ../example_source/source_plain_fortran.f
 )
 
+# as kokkos is used in the interface, the files and target have to be marked
+kokkos_set_source_and_target_properties(
+  SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/../example_source/example_public_kokkos.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../example_source/source_with_kokkos_dependency.cpp
+)
+kokkos_set_source_and_target_properties(TARGET ${PROJECT_NAME}_executable_public_kokkos)
+
 # create an executable that does not use kokkos in interfaces
 add_executable(
   ${PROJECT_NAME}_executable_private_kokkos
   ../example_source/example_private_kokkos.cpp ../example_source/source_plain_cxx.cpp
   ../example_source/source_plain_fortran.f
 )
+# it still links to Kokkos so it has to be marked for linkage
+kokkos_set_source_and_target_properties(LINK_ONLY_TARGET ${PROJECT_NAME}_executable_private_kokkos)
 
 # for LLVMFlang we need to use fortran for linking
 if(CMAKE_Fortran_COMPILER_ID STREQUAL LLVMFlang)
@@ -52,5 +70,5 @@ target_link_libraries(
 )
 
 enable_testing()
-add_test(NAME ${PROJECT_NAME}_KokkosPublic_Verify COMMAND ${PROJECT_NAME}_excutable_public_kokkos 10)
+add_test(NAME ${PROJECT_NAME}_KokkosPublic_Verify COMMAND ${PROJECT_NAME}_executable_public_kokkos 10)
 add_test(NAME ${PROJECT_NAME}_KokkosPrivate_Verify COMMAND ${PROJECT_NAME}_executable_private_kokkos 10)
