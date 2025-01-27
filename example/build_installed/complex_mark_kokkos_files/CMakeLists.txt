@@ -49,9 +49,9 @@ kokkos_set_source_and_target_properties(LINK_ONLY_TARGET ${PROJECT_NAME}_executa
 # for LLVMFlang we need to use fortran for linking
 if(CMAKE_Fortran_COMPILER_ID STREQUAL LLVMFlang)
   set_target_properties(${PROJECT_NAME}_executable_public_kokkos PROPERTIES LINKER_LANGUAGE Fortran)
-  set_target_properties(${PROJECT_NAME}_excutable_private_kokkos PROPERTIES LINKER_LANGUAGE Fortran)
   target_link_options(${PROJECT_NAME}_executable_public_kokkos PRIVATE -fno-fortran-main)
   target_link_options(${PROJECT_NAME}_executale_private_kokkos PRIVATE -fno-fortran-main)
+  set_target_properties(${PROJECT_NAME}_executable_private_kokkos PROPERTIES LINKER_LANGUAGE Fortran)
 endif()
 
 #link your executable to the libraries
