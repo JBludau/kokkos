@@ -20,9 +20,20 @@
 
 namespace lib_with_private_dependency_on_lib_with_public_kokkos_dependency {
 
-void initialize() { lib_with_public_kokkos_dependency::initialize(); }
+static bool i_initialized_lib_with_public_kokkos_dependency = false;
 
-void finalize() { lib_with_public_kokkos_dependency::finalize(); }
+void initialize() {
+  if (!Kokkos::is_initialized()) {
+    lib_with_public_kokkos_dependency::initialize();
+    i_initialized_lib_with_public_kokkos_dependency = true;
+  }
+}
+
+void finalize() {
+  if (i_initialized_lib_with_public_kokkos_dependency and
+      !Kokkos::is_finalized())
+    lib_with_public_kokkos_dependency::finalize();
+}
 
 void print() {
   std::cout

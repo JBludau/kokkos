@@ -22,6 +22,9 @@ namespace lib_with_private_kokkos_dependency {
 
 static bool i_initialized_kokkos = false;
 
+bool is_initialized() { return Kokkos::is_initialized(); }
+bool is_finalized() { return Kokkos::is_finalized(); }
+
 void initialize() {
   // if I have to initialize kokkos, I assume I also have to finalize after I
   // did what I needed Kokkos for

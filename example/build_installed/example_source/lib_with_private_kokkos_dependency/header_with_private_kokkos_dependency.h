@@ -19,6 +19,10 @@
 
 namespace lib_with_private_kokkos_dependency {
 
+bool is_initialized();
+
+bool is_finalized();
+
 void initialize();
 
 void finalize();
