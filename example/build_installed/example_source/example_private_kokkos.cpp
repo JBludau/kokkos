@@ -26,7 +26,7 @@
 extern "C" void print_fortran_();
 void print_plain_cxx();
 
-int main(int argc, char* argv[]) {
+int main() {
   lib_without_kokkos_dependency::print();
 
   lib_with_private_kokkos_dependency::initialize();

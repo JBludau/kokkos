@@ -37,7 +37,7 @@ void finalize() {
 }
 
 void print(Kokkos::View<int*> a) {
-  std::cout << "Hello from lib_with_public_kokkos_dependency\n";
+  std::cout << "Hello from lib_with_public_kokkos_dependency, printig view a(0) " << a(0) << "\n";
 }
 
 }  // namespace lib_with_public_kokkos_dependency
