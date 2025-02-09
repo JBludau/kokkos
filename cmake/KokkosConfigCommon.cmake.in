@@ -537,15 +537,21 @@ function(kokkos_set_source_and_target_properties)
       foreach(target IN LISTS DIRECTORY_COMPILE_TARGETS)
         get_target_property(target_sources ${target} SOURCES)
         get_target_property(target_dir ${target} SOURCE_DIR)
-        list(FILTER target_sources INCLUDE REGEX "\\.cpp$|\\.cxx$")
-        message(
-          DEBUG
-          "Kokkos setting language to @KOKKOS_COMPILE_LANGUAGE@ on target ${target} for sources ${target_dir}/{${target_sources}}"
-        )
         foreach(source IN LISTS target_sources)
-          set_property(
-            SOURCE ${target_dir}/${source} TARGET_DIRECTORY ${target} PROPERTY LANGUAGE @KOKKOS_COMPILE_LANGUAGE@
-          )
+          if(source)
+              cmake_path(ABSOLUTE_PATH source BASE_DIRECTORY ${target_dir} OUTPUT_VARIABLE source_abs_path )
+              cmake_path(GET source_abs_path EXTENSION LAST_ONLY extension)
+              string(REGEX REPLACE "^\\." "" extension_no_dot "${extension}")
+              if(${extension_no_dot} IN_LIST CMAKE_CXX_SOURCE_FILE_EXTENSIONS)
+                message(
+                  DEBUG
+                  "Kokkos setting language to @KOKKOS_COMPILE_LANGUAGE@ on target ${target} for source ${source_abs_path}"
+                )
+                set_property(
+                    SOURCE ${source_abs_path} TARGET_DIRECTORY ${target} PROPERTY LANGUAGE @KOKKOS_COMPILE_LANGUAGE@
+                )
+            endif()
+            endif()
         endforeach()
       endforeach()
     endif()
