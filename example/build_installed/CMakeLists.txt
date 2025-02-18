@@ -1,6 +1,6 @@
-# Kokkos minimally requires 3.19 right now,
+# Kokkos minimally requires 3.21 right now,
 # but your project can set it higher
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.21)
 
 # Projects can safely mix languages - must have C++ support
 project(BuildExamples CXX)
@@ -8,6 +8,7 @@ project(BuildExamples CXX)
 # IMPORTANT INFORMATION
 # this file is only for dev builds
 # it does not reflect how to use the build features of kokkos
+# please refer to the subdirectories for examples how to use the build features
 
 if(Examples_CMAKE_LANGUAGE)
   enable_language(${Examples_CMAKE_LANGUAGE})
