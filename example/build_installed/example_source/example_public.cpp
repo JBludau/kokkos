@@ -14,16 +14,23 @@
 //
 //@HEADER
 
-#ifndef LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_PUBLIC_KOKKOS_DEPENDENCY
-#define LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_PUBLIC_KOKKOS_DEPENDENCY
-
 #include <lib_with_public_kokkos_dependency.h>
 
-namespace lib_with_public_dependency_on_lib_with_public_kokkos_dependency {
+#include <Kokkos_Core.hpp>
 
-void print(
-    lib_with_public_kokkos_dependency::StructOfLibWithPublicKokkosDependency
-        in);
+#include <cstdio>
+#include <iostream>
 
-}  // namespace lib_with_public_dependency_on_lib_with_public_kokkos_dependency
-#endif
+extern "C" void print_fortran_();
+void print_plain_cxx();
+
+int main(int argc, char* argv[]) {
+  Kokkos::initialize();
+  {
+    print_fortran_();
+    print_plain_cxx();
+      lib_with_public_kokkos_dependency::print(
+          Kokkos::View<int*>{"testview", 10});
+  }
+  Kokkos::finalize();
+}

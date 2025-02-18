@@ -14,16 +14,13 @@
 //
 //@HEADER
 
-#ifndef LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_PUBLIC_KOKKOS_DEPENDENCY
-#define LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_PUBLIC_KOKKOS_DEPENDENCY
-
-#include <lib_with_public_kokkos_dependency.h>
-
-namespace lib_with_public_dependency_on_lib_with_public_kokkos_dependency {
-
-void print(
-    lib_with_public_kokkos_dependency::StructOfLibWithPublicKokkosDependency
-        in);
-
-}  // namespace lib_with_public_dependency_on_lib_with_public_kokkos_dependency
+#include <cstdio>
+#ifdef __HIPCC__
+#include <hip/hip_runtime.h>
 #endif
+
+namespace cuda_hip_functions_without_kokkos_dependency {
+
+__global__ void print_from_device() { printf("Hello, from a cuda function!\n"); }
+
+}  // namespace cuda_hip_functions_without_kokkos_dependency

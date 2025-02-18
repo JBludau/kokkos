@@ -21,10 +21,6 @@
 
 namespace lib_with_public_kokkos_dependency {
 
-void initialize();
-
-void finalize();
-
 void print(Kokkos::View<int*> a);
 
 struct StructOfLibWithPublicKokkosDependency {

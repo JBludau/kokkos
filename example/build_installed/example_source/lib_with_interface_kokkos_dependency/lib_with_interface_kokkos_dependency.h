@@ -14,28 +14,34 @@
 //
 //@HEADER
 
-#include "lib_with_public_kokkos_dependency.h"
-#ifdef __HIPCC__
-#include <hip/hip_runtime.h>
+#ifndef LIB_WITH_INTERFACE_KOKKOS_DEPENDENCY
+#define LIB_WITH_INTERFACE_KOKKOS_DEPENDENCY
+
+#include <Kokkos_Core.hpp>
+#if defined __CUDACC__ || defined __HIPCC__
+#include <cuda_hip_header_without_kokkos_dependency.cuh>
 #endif
+
 #include <iostream>
 
+namespace lib_with_interface_kokkos_dependency {
 
-#if defined __CUDACC__ || defined __HIPCC__
-namespace cuda_hip_functions_without_kokkos_dependency{
-__global__
-void print_from_device();
-}
-#endif
-
-namespace lib_with_public_kokkos_dependency {
-
-void print(Kokkos::View<int*> a) {
-  std::cout << "Hello from lib_with_public_kokkos_dependency, printig view a(0) " << a(0) << "\n";
+template<typename ViewType>
+void print(ViewType a)
+    {
+  static_assert(std::is_same_v<Kokkos::View<int*>, ViewType>, "ViewType must match Kokkos::View<int*>");
+  std::cout << "Hello from lib_with_interface_kokkos_dependency, printig view a(0) " << a(0) << "\n";
 #if defined __CUDACC__ || defined __HIPCC__
   std::cout << "Calling additional device function without kokkos dependency\n";
-  cuda_hip_functions_without_kokkos_dependency::print_from_device<<<1,1>>>();
+  cuda_hip_header_without_kokkos_dependency::print_from_device<<<1,1>>>(1.0);
 #endif
-}
+  }
 
-}  // namespace lib_with_public_kokkos_dependency
+template<typename ViewType>
+struct StructOfLibWithInterfaceKokkosDependency {
+  ViewType value;
+};
+
+}  // namespace lib_with_interface_kokkos_dependency
+
+#endif

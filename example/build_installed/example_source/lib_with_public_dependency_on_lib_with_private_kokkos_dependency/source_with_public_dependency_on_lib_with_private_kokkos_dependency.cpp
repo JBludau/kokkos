@@ -35,12 +35,12 @@ void finalize() {
 }
 
 void print(lib_with_private_kokkos_dependency::
-               StructOfLibWithPrivateKokkosDependency) {
+               StructOfLibWithPrivateKokkosDependency in) {
   std::cout
       << "Hello from "
          "lib_with_public_dependency_on_lib_with_private_kokkos_dependency\n";
   std::cout << "Will call lib_with_private_kokkos_dependency now:\n";
-  lib_with_private_kokkos_dependency::print();
+  lib_with_private_kokkos_dependency::print(in);
   std::cout << "Done\n";
 }
 

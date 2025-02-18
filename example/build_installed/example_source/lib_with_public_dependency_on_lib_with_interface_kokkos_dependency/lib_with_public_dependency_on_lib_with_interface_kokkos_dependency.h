@@ -14,16 +14,16 @@
 //
 //@HEADER
 
-#ifndef LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_PUBLIC_KOKKOS_DEPENDENCY
-#define LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_PUBLIC_KOKKOS_DEPENDENCY
+#ifndef LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_INTERFACE_KOKKOS_DEPENDENCY
+#define LIB_WITH_PUBLIC_DEPENDENCY_ON_LIB_WITH_INTERFACE_KOKKOS_DEPENDENCY
 
-#include <lib_with_public_kokkos_dependency.h>
+#include <lib_with_interface_kokkos_dependency.h>
 
-namespace lib_with_public_dependency_on_lib_with_public_kokkos_dependency {
+namespace lib_with_public_dependency_on_lib_with_interface_kokkos_dependency {
 
 void print(
-    lib_with_public_kokkos_dependency::StructOfLibWithPublicKokkosDependency
+    lib_with_interface_kokkos_dependency::StructOfLibWithInterfaceKokkosDependency<Kokkos::View<int*>>
         in);
 
-}  // namespace lib_with_public_dependency_on_lib_with_public_kokkos_dependency
+}  // namespace lib_with_public_dependency_on_lib_with_interface_kokkos_dependency
 #endif

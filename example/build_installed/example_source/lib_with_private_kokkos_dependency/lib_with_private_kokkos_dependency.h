@@ -22,7 +22,7 @@
 
 namespace lib_with_private_kokkos_dependency {
 
-void print();
+void print([[maybe_unused]] StructOfLibWithPrivateKokkosDependency in);
 
 }  // namespace lib_with_private_kokkos_dependency
 #endif

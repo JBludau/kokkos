@@ -14,10 +14,24 @@
 //
 //@HEADER
 
-#include <Kokkos_Core.hpp>
+#include <lib_without_kokkos_dependency.h>
+#include <lib_with_private_dependency_on_lib_with_private_kokkos_dependency.h>
+
+#include <cstdio>
 #include <iostream>
 
-void print_kokkos() {
-  std::cout << "Hello From a kokkos function\n";
-  Kokkos::print_configuration(std::cout);
+extern "C" void print_fortran_();
+void print_plain_cxx();
+
+int main() {
+  lib_without_kokkos_dependency::print();
+
+  lib_with_private_dependency_on_lib_with_private_kokkos_dependency::initialize();
+  {
+    lib_with_private_dependency_on_lib_with_private_kokkos_dependency::print();
+  }
+  lib_with_private_dependency_on_lib_with_private_kokkos_dependency::finalize();
+
+  print_fortran_();
+  print_plain_cxx();
 }

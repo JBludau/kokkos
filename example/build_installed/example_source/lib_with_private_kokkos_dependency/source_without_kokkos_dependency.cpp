@@ -15,13 +15,27 @@
 //@HEADER
 
 #include "header_without_kokkos_dependency.h"
+#ifdef __HIPCC__
+#include <hip/hip_runtime.h>
+#endif
 #include <iostream>
+
+#if defined __CUDACC__ || defined __HIPCC__
+namespace cuda_hip_functions_without_kokkos_dependency{
+__global__
+void print_from_device();
+}
+#endif
 
 namespace lib_with_private_kokkos_dependency {
 
 void print_non_kokkos() {
   std::cout << "Hello from non-kokkos function inside "
                "lib_with_private_kokkos_dependency\n";
+#if defined __CUDACC__ || defined __HIPCC__
+  std::cout << "Calling additional device function without kokkos dependency\n";
+  cuda_hip_functions_without_kokkos_dependency::print_from_device<<<1,1>>>();
+#endif
 }
 
 }  // namespace lib_with_private_kokkos_dependency
