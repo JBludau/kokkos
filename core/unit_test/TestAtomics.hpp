@@ -542,6 +542,12 @@ TEST(TEST_CATEGORY, atomics) {
   Loop<Kokkos::complex<double>, TEST_EXECSPACE>(100, 4);
 #endif
 
+#if defined(KOKKOS_ENABLE_CUDA) && (CUDA_VERSION >= 12080)
+  // Loop<__int128_t, TEST_EXECSPACE>(100, 1);
+  Loop<__int128_t, TEST_EXECSPACE>(100, 2);
+  Loop<__int128_t, TEST_EXECSPACE>(100, 3);
+#endif
+
 // WORKAROUND MSVC
 #ifndef _WIN32
   Loop<SuperScalar<4>, TEST_EXECSPACE>(100, 1);
