@@ -350,8 +350,10 @@ class UnorderedMap {
     /// properties.
     const auto prop_copy =
         Impl::with_properties_if_unset(arg_prop, std::string("UnorderedMap"));
-    const auto prop_copy_noinit =
-        Impl::with_properties_if_unset(prop_copy, Kokkos::WithoutInitializing);
+    const auto prop_copy_init_removed =
+        Impl::without_properties_if_set(prop_copy, Kokkos::SequentialHostInit);
+    const auto prop_copy_noinit = Impl::with_properties_if_unset(
+        prop_copy_init_removed, Kokkos::WithoutInitializing);
 
     //! Initialize member views.
     m_size = shared_size_t(Kokkos::view_alloc(

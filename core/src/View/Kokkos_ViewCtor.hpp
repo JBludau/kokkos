@@ -370,6 +370,55 @@ auto with_properties_if_unset(const ViewCtorProp<P...> &view_ctor_prop,
 
 #endif
 
+template <typename Property, typename... P, typename Except>
+auto set_properties_except(const ViewCtorProp<Property, P...> &view_ctor_prop,
+                           [[maybe_unused]] const Except &except) {
+  if constexpr (std::is_same_v<Property, Except>)
+    return set_properties_except(
+        static_cast<const ViewCtorProp<P...> &>(view_ctor_prop), except);
+  else {
+    auto returned_view_ctor_prop = set_properties_except(
+        static_cast<const ViewCtorProp<P...> &>(view_ctor_prop), except);
+    ViewCtorProp<Property, P...> new_view_ctor_prop(view_ctor_prop);
+    static_cast<ViewCtorProp<void, Property> &>(new_view_ctor_prop).value =
+        static_cast<const ViewCtorProp<void, Property> &>(view_ctor_prop).value;
+    return new_view_ctor_prop;
+  }
+}
+
+template <typename Except>
+auto set_properties_except(const ViewCtorProp<> &view_ctor_prop,
+                           const Except &) {
+  return view_ctor_prop;
+}
+
+template <typename... P>
+auto without_properties_if_set(const ViewCtorProp<P...> &view_ctor_prop) {
+  return view_ctor_prop;
+}
+
+template <typename... P, typename Property, typename... Properties>
+auto without_properties_if_set(const ViewCtorProp<P...> &view_ctor_prop,
+                               [[maybe_unused]] const Property &property,
+                               const Properties &...properties) {
+  return without_properties_if_set(
+      set_properties_except(view_ctor_prop, property), properties...);
+
+// A workaround placed to prevent spurious "missing return statement at the
+// end of non-void function" warnings from CUDA builds (issue #5470). Because
+// KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK removes [[noreturn]] attribute from
+// cuda_abort(), an unreachable while(true); is placed as a fallback method
+#if (defined(KOKKOS_COMPILER_NVCC) && (KOKKOS_COMPILER_NVCC < 1150))
+  Kokkos::abort(
+      "Prevents an incorrect warning: missing return statement at end of "
+      "non-void function");
+#ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
+  while (true)
+    ;
+#endif
+#endif
+}
+
 struct ExecutionSpaceTag {};
 struct MemorySpaceTag {};
 struct LabelTag {};
