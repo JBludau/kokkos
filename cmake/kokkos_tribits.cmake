@@ -242,6 +242,7 @@ function(KOKKOS_SET_LIBRARY_PROPERTIES LIBRARY_NAME)
       set(Kokkos_LANGUAGES "HIP,CXX")
     elseif(Kokkos_ENABLE_CUDA)
       set(Kokkos_LANGUAGES "CUDA,CXX")
+    endif()
   endif()
 
   if(NOT KOKKOS_ENABLE_COMPILE_AS_CMAKE_LANGUAGE)
