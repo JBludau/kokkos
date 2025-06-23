@@ -141,6 +141,7 @@ pipeline {
                                 -DKokkos_ENABLE_CUDA_UVM=ON \
                                 -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON \
                                 -DKokkos_ENABLE_DEPRECATED_CODE_4=ON \
+                                -DKokkos_ENABLE_MULTIPLE_CMAKE_LANGUAGES=ON \
                                 \
                                 -DCMAKE_INSTALL_PREFIX=${PWD}/../install \
                               .. && \
@@ -159,6 +160,14 @@ pipeline {
                               .. && \
                               make -j8 && ctest --no-compress-output -T Test --verbose && \
                               cd ../example/build_cmake_installed && \
+                              rm -rf build && mkdir -p build && cd build && \
+                              cmake \
+                                -DCMAKE_CXX_COMPILER=g++-8 \
+                                -DCMAKE_CXX_FLAGS=-Werror \
+                                -DCMAKE_CXX_STANDARD=17 \
+                              .. && \
+                              make -j8 && ctest --verbose && \
+                              cd ../build_cmake_installed_multilanguage && \
                               rm -rf build && mkdir -p build && cd build && \
                               cmake \
                                 -DCMAKE_CXX_COMPILER=g++-8 \
