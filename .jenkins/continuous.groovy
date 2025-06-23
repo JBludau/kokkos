@@ -167,7 +167,7 @@ pipeline {
                                 -DCMAKE_CXX_STANDARD=17 \
                               .. && \
                               make -j8 && ctest --verbose && \
-                              cd ../build_cmake_installed_multilanguage && \
+                              cd ../example/build_cmake_installed_multilanguage && \
                               rm -rf build && mkdir -p build && cd build && \
                               cmake \
                                 -DCMAKE_CXX_COMPILER=g++-8 \
