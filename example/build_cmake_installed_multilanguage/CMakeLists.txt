@@ -8,7 +8,7 @@ project(Example CXX Fortran)
 
 # Look for an installed Kokkos
 find_package(Kokkos)
-if (NOT ${Kokkos_ENABLE_MULTIPLE_CMAKE_LANGUAGES})
+if(NOT ${Kokkos_ENABLE_MULTIPLE_CMAKE_LANGUAGES})
   message(FATAL_ERROR "This example needs Kokkos_ENABLE_MULTIPLE_CMAKE_LANGUAGES=ON")
 endif()
 
