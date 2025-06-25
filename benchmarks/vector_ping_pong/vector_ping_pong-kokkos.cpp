@@ -1,0 +1,92 @@
+//@HEADER
+// ************************************************************************
+//
+//                        Kokkos v. 4.0
+//       Copyright (2022) National Technology & Engineering
+//               Solutions of Sandia, LLC (NTESS).
+//
+// Under the terms of Contract DE-NA0003525 with NTESS,
+// the U.S. Government retains certain rights in this software.
+//
+// Part of Kokkos, under the Apache License v2.0 with LLVM Exceptions.
+// See https://kokkos.org/LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//@HEADER
+
+#include "Kokkos_Core.hpp"
+#include <iostream>
+
+#include <sys/time.h>
+
+template <typename MemorySpacePing, typename MemorySpacePong,
+          typename VectorValue, typename VectorIndex>
+int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
+                  VectorIndex size) {
+  using Policy = Kokkos::RangePolicy<Kokkos::IndexType<VectorIndex>>;
+
+  int warmup_runs = 10;
+  int num_runs    = 100;
+
+  auto ping_view = Kokkos::View<VectorValue*, MemorySpacePing>{ping_data, size};
+  auto pong_view = Kokkos::View<VectorValue*, MemorySpacePong>{pong_data, size};
+
+  // TODO make warmup on another array ... so we don't mess up the initial
+  // placement
+  for (int i = 0; i < warmup_runs; ++i) {
+    Kokkos::parallel_for(
+        "warmup inc", Policy(0, size),
+        KOKKOS_LAMBDA(const VectorIndex i) { ++ping_view(i); });
+    Kokkos::parallel_for(
+        "warmup dec", Policy(0, size),
+        KOKKOS_LAMBDA(const VectorIndex i) { --ping_view(i); });
+  }
+
+  Kokkos::fence();
+
+  Kokkos::Timer timer;
+  for (int i = 0; i < num_runs; ++i) {
+    Kokkos::deep_copy(ping_view, pong_view);
+    Kokkos::parallel_for(
+        "ping", Policy(Kokkos::DefaultExecutionSpace(), 0, size),
+        KOKKOS_LAMBDA(const VectorIndex i) { ++ping_view(i); });
+    Kokkos::deep_copy(pong_view, ping_view);
+    Kokkos::parallel_for(
+        "pong", Policy(Kokkos::DefaultHostExecutionSpace(), 0, size),
+        KOKKOS_LAMBDA(const VectorIndex i) { --pong_view(i); });
+  }
+  std::cout << timer.seconds() << std::endl;
+  // Kokkos::fence();
+
+  // check for errors
+  int error_count = 0;
+  // since we ended on pong but want to check ping, we need to copy it again.
+  Kokkos::deep_copy(ping_view, pong_view);
+  Kokkos::parallel_reduce(
+      "error_check", Policy(Kokkos::DefaultExecutionSpace(), 0, size),
+      KOKKOS_LAMBDA(const VectorIndex i, int& error) { error += ping_view(i); },
+      error_count);
+  Kokkos::fence();
+  return error_count;
+}
+
+int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
+  Kokkos::initialize(argc, argv);
+
+  using ValueType = int;
+
+  int size              = 1 << 20;
+  ValueType* vec_device = new ValueType[size];
+  ValueType* vec_host   = new ValueType[size];
+
+  const int rc = run_benchmark<Kokkos::DefaultExecutionSpace,
+                               Kokkos::DefaultHostExecutionSpace>(
+      vec_device, vec_host, size);
+
+  delete[] vec_device;
+  delete[] vec_host;
+
+  Kokkos::finalize();
+
+  return rc;
+}

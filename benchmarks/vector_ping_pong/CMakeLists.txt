@@ -1,0 +1,1 @@
+kokkos_add_executable(vector_ping_pong SOURCES vector_ping_pong-kokkos.cpp)
