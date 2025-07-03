@@ -20,10 +20,10 @@
 #include <sys/time.h>
 
 template <typename MemorySpacePing, typename MemorySpacePong,
+          typename ExecutionSpacePing, typename ExecutionSpacePong,
           typename VectorValue, typename VectorIndex>
 int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
                   VectorIndex size) {
-  using Policy = Kokkos::RangePolicy<Kokkos::IndexType<VectorIndex>>;
 
   int warmup_runs = 10;
   int num_runs    = 100;
@@ -35,10 +35,10 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   // placement
   for (int i = 0; i < warmup_runs; ++i) {
     Kokkos::parallel_for(
-        "warmup inc", Policy(0, size),
+        "warmup inc", Kokkos::RangePolicy(ExecutionSpacePing(),0, size),
         KOKKOS_LAMBDA(const VectorIndex i) { ++ping_view(i); });
     Kokkos::parallel_for(
-        "warmup dec", Policy(0, size),
+        "warmup dec", Kokkos::RangePolicy(ExecutionSpacePing(),0, size),
         KOKKOS_LAMBDA(const VectorIndex i) { --ping_view(i); });
   }
 
@@ -48,11 +48,11 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   for (int i = 0; i < num_runs; ++i) {
     Kokkos::deep_copy(ping_view, pong_view);
     Kokkos::parallel_for(
-        "ping", Policy(Kokkos::DefaultExecutionSpace(), 0, size),
+        "ping", Kokkos::RangePolicy(ExecutionSpacePing(),0, size),
         KOKKOS_LAMBDA(const VectorIndex i) { ++ping_view(i); });
     Kokkos::deep_copy(pong_view, ping_view);
     Kokkos::parallel_for(
-        "pong", Policy(Kokkos::DefaultHostExecutionSpace(), 0, size),
+        "pong", Kokkos::RangePolicy(ExecutionSpacePong(),0, size),
         KOKKOS_LAMBDA(const VectorIndex i) { --pong_view(i); });
   }
   std::cout << timer.seconds() << std::endl;
@@ -63,7 +63,7 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   // since we ended on pong but want to check ping, we need to copy it again.
   Kokkos::deep_copy(ping_view, pong_view);
   Kokkos::parallel_reduce(
-      "error_check", Policy(Kokkos::DefaultExecutionSpace(), 0, size),
+      "error_check", Kokkos::RangePolicy(ExecutionSpacePing(), 0, size),
       KOKKOS_LAMBDA(const VectorIndex i, int& error) { error += ping_view(i); },
       error_count);
   Kokkos::fence();
@@ -79,8 +79,11 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
   ValueType* vec_device = new ValueType[size];
   ValueType* vec_host   = new ValueType[size];
 
-  const int rc = run_benchmark<Kokkos::DefaultExecutionSpace,
-                               Kokkos::DefaultHostExecutionSpace>(
+  const int rc = run_benchmark<Kokkos::HostSpace,
+                               Kokkos::HostSpace,
+                               Kokkos::DefaultHostExecutionSpace,
+                               Kokkos::DefaultHostExecutionSpace
+                               >(
       vec_device, vec_host, size);
 
   delete[] vec_device;
