@@ -28,10 +28,9 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   int num_runs    = 100;
 
   auto warmup_view =
-      Kokkos::View<VectorValue*, MemorySpacePing>{"warmup", size} :
+      Kokkos::View<VectorValue*, MemorySpacePing>{"warmup", size};
 
-      auto ping_view =
-          Kokkos::View<VectorValue*, MemorySpacePing>{ping_data, size};
+  auto ping_view = Kokkos::View<VectorValue*, MemorySpacePing>{ping_data, size};
   auto pong_view = Kokkos::View<VectorValue*, MemorySpacePong>{pong_data, size};
 
   // do warmup with another view so we don't mess up the placement
