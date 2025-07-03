@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
 
   using ValueType = int;
 
-  int size              = 1 << 20;
+  unsigned size         = 1 << 20;
   ValueType* vec_device = new ValueType[size];
   ValueType* vec_host   = new ValueType[size];
 
