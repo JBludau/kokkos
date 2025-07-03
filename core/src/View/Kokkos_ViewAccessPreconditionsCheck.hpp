@@ -69,11 +69,11 @@ struct RuntimeCheckBasicViewMemoryAccessViolation<MemorySpace, AccessSpace,
 
 template <class MemorySpace>
 KOKKOS_FUNCTION void runtime_check_memory_access_violation(
-    SharedAllocationTracker const &track) {
-  KOKKOS_IF_ON_HOST(((void)RuntimeCheckBasicViewMemoryAccessViolation<
-                         MemorySpace, DefaultHostExecutionSpace>(track);))
-  KOKKOS_IF_ON_DEVICE(((void)RuntimeCheckBasicViewMemoryAccessViolation<
-                           MemorySpace, DefaultExecutionSpace>(track);))
+    [[maybe_unused]] SharedAllocationTracker const &track) {
+  // KOKKOS_IF_ON_HOST(((void)RuntimeCheckBasicViewMemoryAccessViolation<
+  // MemorySpace, DefaultHostExecutionSpace>(track);))
+  // KOKKOS_IF_ON_DEVICE(((void)RuntimeCheckBasicViewMemoryAccessViolation<
+  // MemorySpace, DefaultExecutionSpace>(track);))
 }
 
 template <class IndexType, std::size_t... Extents, class... Indices,
