@@ -94,11 +94,10 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
     ValueType* vec_ping = new ValueType[size];
     ValueType* vec_pong = new ValueType[size];
 
-    const int rc = run_benchmark<Kokkos::HostSpace, Kokkos::HostSpace,
-                                 Kokkos::DefaultExecutionSpace,
-                                 Kokkos::DefaultHostExecutionSpace>,
-              Kokkos::DefaultExecutionSpace,
-              Kokkos::DefaultHostExecutionSpace > (vec_ping, vec_pong, size);
+    const int rc = run_benchmark<
+        Kokkos::HostSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
+        Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
+        Kokkos::DefaultHostExecutionSpace>(vec_ping, vec_pong, size);
 
     delete[] vec_ping;
     delete[] vec_pong;
