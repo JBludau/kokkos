@@ -3479,14 +3479,14 @@ struct RuntimeCheckViewMemoryAccessViolation<MemorySpace, AccessSpace, false> {
 template <class MemorySpace, class Track, class Map, class... Ignore>
 KOKKOS_FUNCTION void runtime_check_memory_access_violation(
     char const* const msg, Track const& track, Map const& map, Ignore...) {
-  KOKKOS_IF_ON_HOST(
-      ((void)RuntimeCheckViewMemoryAccessViolation<MemorySpace,
-                                                   DefaultHostExecutionSpace>(
-           msg, track, map);))
-  KOKKOS_IF_ON_DEVICE(
-      ((void)RuntimeCheckViewMemoryAccessViolation<MemorySpace,
-                                                   DefaultExecutionSpace>(
-           msg, track, map);))
+  // KOKKOS_IF_ON_HOST(
+  // ((void)RuntimeCheckViewMemoryAccessViolation<MemorySpace,
+  // DefaultHostExecutionSpace>(
+  // msg, track, map);))
+  // KOKKOS_IF_ON_DEVICE(
+  // ((void)RuntimeCheckViewMemoryAccessViolation<MemorySpace,
+  // DefaultExecutionSpace>(
+  // msg, track, map);))
 }
 
 } /* namespace Impl */
