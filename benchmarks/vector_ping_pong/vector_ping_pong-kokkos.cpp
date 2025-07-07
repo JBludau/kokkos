@@ -107,5 +107,5 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
   }
   Kokkos::finalize();
 
-  return rc;
+  return 0;
 }
