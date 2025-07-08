@@ -222,7 +222,7 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
                 << std::endl;
 
     //////////////////////CUDA_MALLOC_MANAGED
-    int rc = benchmark_cudaMallocManaged_separate_arrays<
+    rc = benchmark_cudaMallocManaged_separate_arrays<
         ValueType, Kokkos::DefaultExecutionSpace,
         Kokkos::DefaultHostExecutionSpace>(size);
     if (rc != 0)
@@ -238,7 +238,7 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
                 << rc << std::endl;
 
     ////////////////////CUDA_MALLOC
-    int rc =
+    rc =
         benchmark_cudaMalloc_separate_arrays<ValueType,
                                              Kokkos::DefaultExecutionSpace,
                                              Kokkos::DefaultHostExecutionSpace>(
