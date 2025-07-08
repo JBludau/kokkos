@@ -64,7 +64,10 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
 
   Kokkos::Timer timer;
   for (int i = 0; i < num_runs; ++i) {
-    Kokkos::deep_copy(ping_view, pong_view);
+    if constexpr (needs_deep_copy)
+      Kokkos::deep_copy(ping_view, pong_view);
+    else
+      Kokkos::fence();
     Kokkos::parallel_for(
         "ping", Kokkos::RangePolicy(ExecutionSpacePing(), 0, size),
         KOKKOS_LAMBDA(const VectorIndex i) { ++ping_view(i); });
@@ -77,7 +80,13 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
         KOKKOS_LAMBDA(const VectorIndex i) { ++pong_view(i); });
   }
   Kokkos::fence();
-  std::cout << timer.seconds() << std::endl;
+  auto totalTime = timer.seconds();
+  std::cout << "Elapsed time " << totalTime << " for " << num_runs
+            << " runs with vectolength " << size
+            << " resulting average bandwitdh "
+            << 1.0e-6 * 2.0 * num_runs * size * (double)sizeof(VectorValue) /
+                   totalTime
+            << " MB/s" << std::endl;
   // Kokkos::fence();
 
   // check for errors
@@ -101,7 +110,7 @@ int benchmark_new_separate_arrays(unsigned size) {
   ValueType* vec_ping = new ValueType[size];
   ValueType* vec_pong = new ValueType[size];
 
-  const int rc = run_benchmark<
+  int rc = run_benchmark<
       Kokkos::HostSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, true>(vec_ping, vec_pong, size);
@@ -117,7 +126,7 @@ template <typename ValueType, typename ExecutionSpacePing,
 int benchmark_new_single_array(unsigned size) {
   ValueType* vec_ping_pong = new ValueType[size];
 
-  const int rc = run_benchmark<
+  int rc = run_benchmark<
       Kokkos::HostSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, false>(vec_ping_pong, vec_ping_pong,
@@ -135,7 +144,7 @@ int benchmark_cudaMallocManaged_single_array(unsigned size) {
   ValueType* vec_ping_pong;
   cudaMallocManaged(&vec_ping_pong, size * sizeof(ValueType));
 
-  const int rc = run_benchmark<
+  int rc = run_benchmark<
       Kokkos::CudaUVMSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, false>(vec_ping_pong, vec_ping_pong,
@@ -154,7 +163,7 @@ int benchmark_cudaMallocManaged_separate_arrays(unsigned size) {
   cudaMallocManaged(&vec_ping, size * sizeof(ValueType));
   cudaMallocManaged(&vec_pong, size * sizeof(ValueType));
 
-  const int rc = run_benchmark<
+  int rc = run_benchmark<
       Kokkos::CudaUVMSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, true>(vec_ping, vec_pong, size);
@@ -172,7 +181,7 @@ int benchmark_cudaMalloc_single_array(unsigned size) {
   ValueType* vec_ping_pong;
   cudaMalloc(&vec_ping_pong, size * sizeof(ValueType));
 
-  const int rc = run_benchmark<
+  int rc = run_benchmark<
       Kokkos::CudaUVMSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, false>(vec_ping_pong, vec_ping_pong,
@@ -191,7 +200,7 @@ int benchmark_cudaMalloc_separate_arrays(unsigned size) {
   cudaMalloc(&vec_ping, size * sizeof(ValueType));
   // cudaMalloc(&vec_pong, size * sizeof(ValueType));
 
-  const int rc = run_benchmark<
+  int rc = run_benchmark<
       Kokkos::CudaSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
       Kokkos::DefaultHostExecutionSpace, true>(vec_ping, vec_pong, size);
