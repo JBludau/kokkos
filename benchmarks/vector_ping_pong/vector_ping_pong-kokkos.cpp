@@ -87,7 +87,7 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   Kokkos::parallel_reduce(
       "error_check", Kokkos::RangePolicy(ExecutionSpacePing(), 0, size),
       KOKKOS_LAMBDA(const VectorIndex i, int& error) {
-        error += ping_view(i) == num_runs * 2 ? 1 : 0;
+        error += (ping_view(i) == num_runs * 2) ? 0 : 1;
       },
       error_count);
   Kokkos::fence();
