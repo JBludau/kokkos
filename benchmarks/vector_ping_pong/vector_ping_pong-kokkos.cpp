@@ -22,8 +22,8 @@
 template <typename MemorySpacePing, typename MemorySpacePong,
           typename ExecutionSpacePing, typename ExecutionSpacePong,
           typename ExecutionSpaceFirstTouchPing,
-          typename ExecutionSpaceFirstTouchPong, typename VectorValue,
-          typename VectorIndex>
+          typename ExecutionSpaceFirstTouchPong, bool needs_deep_copy,
+          typename VectorValue, typename VectorIndex>
 int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
                   VectorIndex size) {
   int warmup_runs = 10;
@@ -46,16 +46,21 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   }
   Kokkos::fence();
 
+  Kokkos::Timer first_touch_ping{};
   Kokkos::parallel_for(
       "first_touch_ping",
       Kokkos::RangePolicy(ExecutionSpaceFirstTouchPing(), 0, size),
       KOKKOS_LAMBDA(const VectorIndex i) { ping_view(i) = VectorValue{}; });
+  Kokkos::fence();
+  std::cout << "First touch ping " << first_touch_ping.seconds() << std::endl;
+
+  Kokkos::Timer first_touch_pong;
   Kokkos::parallel_for(
       "first_touch_pong",
       Kokkos::RangePolicy(ExecutionSpaceFirstTouchPong(), 0, size),
       KOKKOS_LAMBDA(const VectorIndex i) { pong_view(i) = VectorValue{}; });
-
   Kokkos::fence();
+  std::cout << "First touch pong " << first_touch_pong.seconds() << std::endl;
 
   Kokkos::Timer timer;
   for (int i = 0; i < num_runs; ++i) {
@@ -63,11 +68,15 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
     Kokkos::parallel_for(
         "ping", Kokkos::RangePolicy(ExecutionSpacePing(), 0, size),
         KOKKOS_LAMBDA(const VectorIndex i) { ++ping_view(i); });
-    Kokkos::deep_copy(pong_view, ping_view);
+    if constexpr (needs_deep_copy)
+      Kokkos::deep_copy(pong_view, ping_view);
+    else
+      Kokkos::fence();
     Kokkos::parallel_for(
         "pong", Kokkos::RangePolicy(ExecutionSpacePong(), 0, size),
         KOKKOS_LAMBDA(const VectorIndex i) { ++pong_view(i); });
   }
+  Kokkos::fence();
   std::cout << timer.seconds() << std::endl;
   // Kokkos::fence();
 
@@ -97,7 +106,7 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
     const int rc = run_benchmark<
         Kokkos::HostSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
         Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
-        Kokkos::DefaultHostExecutionSpace>(vec_ping, vec_pong, size);
+        Kokkos::DefaultHostExecutionSpace, false>(vec_ping, vec_pong, size);
 
     delete[] vec_ping;
     delete[] vec_pong;
