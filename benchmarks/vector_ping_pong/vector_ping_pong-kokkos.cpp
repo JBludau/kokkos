@@ -94,24 +94,55 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   return error_count;
 }
 
+template <typename ValueType, typename ExecutionSpacePing,
+          typename ExecutionSpacePong>
+int benchmark_new_separate_arrays(unsigned size) {
+  ValueType* vec_ping = new ValueType[size];
+  ValueType* vec_pong = new ValueType[size];
+
+  const int rc = run_benchmark<
+      Kokkos::HostSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
+      Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
+      Kokkos::DefaultHostExecutionSpace, true>(vec_ping, vec_pong, size);
+
+  delete[] vec_ping;
+  delete[] vec_pong;
+
+  return rc;
+}
+
+template <typename ValueType, typename ExecutionSpacePing,
+          typename ExecutionSpacePong>
+int benchmark_new_single_array(unsigned size) {
+  ValueType* vec_ping_pong = new ValueType[size];
+
+  const int rc = run_benchmark<
+      Kokkos::HostSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
+      Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
+      Kokkos::DefaultHostExecutionSpace, false>(vec_ping_pong, vec_ping_pong,
+                                                size);
+
+  delete[] vec_ping_pong;
+
+  return rc;
+}
+
 int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
   Kokkos::initialize(argc, argv);
   {
     using ValueType = int;
+    unsigned size   = 1 << 25;
 
-    unsigned size       = 1 << 20;
-    ValueType* vec_ping = new ValueType[size];
-    ValueType* vec_pong = new ValueType[size];
-
-    const int rc = run_benchmark<
-        Kokkos::HostSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
-        Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
-        Kokkos::DefaultHostExecutionSpace, false>(vec_ping, vec_pong, size);
-
-    delete[] vec_ping;
-    delete[] vec_pong;
+    int rc =
+        benchmark_new_separate_arrays<ValueType, Kokkos::DefaultExecutionSpace,
+                                      Kokkos::DefaultHostExecutionSpace>(size);
     if (rc != 0)
-      std::cout << "error check not successful, error count:" << rc
+      std::cout << "NEW_separated: error check not successful, error count:"
+                << rc << std::endl;
+    rc = benchmark_new_single_array<ValueType, Kokkos::DefaultExecutionSpace,
+                                    Kokkos::DefaultHostExecutionSpace>(size);
+    if (rc != 0)
+      std::cout << "NEW_single: error check not successful, error count:" << rc
                 << std::endl;
   }
   Kokkos::finalize();
