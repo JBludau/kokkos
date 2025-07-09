@@ -82,7 +82,7 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   Kokkos::fence();
   auto totalTime = timer.seconds();
   std::cout << "Elapsed time " << totalTime << " for " << num_runs
-            << " runs with vectolength " << size
+            << " runs with vectorlength " << size
             << " resulting average bandwitdh "
             << 1.0e-6 * 2.0 * num_runs * size * (double)sizeof(VectorValue) /
                    totalTime
@@ -177,28 +177,11 @@ int benchmark_cudaMallocManaged_separate_arrays(unsigned size) {
 /////////////////////CUDA_MALLOC
 template <typename ValueType, typename ExecutionSpacePing,
           typename ExecutionSpacePong>
-int benchmark_cudaMalloc_single_array(unsigned size) {
-  ValueType* vec_ping_pong;
-  cudaMalloc(&vec_ping_pong, size * sizeof(ValueType));
-
-  int rc = run_benchmark<
-      Kokkos::CudaUVMSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, false>(vec_ping_pong, vec_ping_pong,
-                                                size);
-
-  cudaFree(vec_ping_pong);
-
-  return rc;
-}
-
-template <typename ValueType, typename ExecutionSpacePing,
-          typename ExecutionSpacePong>
 int benchmark_cudaMalloc_separate_arrays(unsigned size) {
   ValueType* vec_ping;
-  ValueType* vec_pong = new ValueType[size];
+  ValueType* vec_pong;
   cudaMalloc(&vec_ping, size * sizeof(ValueType));
-  // cudaMalloc(&vec_pong, size * sizeof(ValueType));
+  cudaMallocHostPinned(&vec_pong, size * sizeof(ValueType));
 
   int rc = run_benchmark<
       Kokkos::CudaSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
@@ -206,8 +189,26 @@ int benchmark_cudaMalloc_separate_arrays(unsigned size) {
       Kokkos::DefaultHostExecutionSpace, true>(vec_ping, vec_pong, size);
 
   cudaFree(vec_ping);
-  // cudaFree(vec_pong);
-  delete[] vec_pong;
+  cudaFree(vec_pong);
+
+  return rc;
+}
+
+template <typename ValueType, typename ExecutionSpacePing,
+          typename ExecutionSpacePong>
+int benchmark_cudaMalloc_cudaMallocHostPinned_separate_arrays(unsigned size) {
+  ValueType* vec_ping;
+  ValueType* vec_pong;
+  cudaMalloc(&vec_ping, size * sizeof(ValueType));
+  cudaMallocHost(&vec_pong, size * sizeof(ValueType));
+
+  int rc = run_benchmark<
+      Kokkos::CudaSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
+      Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
+      Kokkos::DefaultHostExecutionSpace, true>(vec_ping, vec_pong, size);
+
+  cudaFree(vec_ping);
+  cudaFree(vec_pong);
 
   return rc;
 }
@@ -257,14 +258,14 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
       std::cout << "cudaMalloc_separated: error check not successful, "
                    "error count:"
                 << rc << std::endl;
-    // rc = benchmark_cudaMalloc_single_array<ValueType,
-    // Kokkos::DefaultExecutionSpace,
-    // Kokkos::DefaultHostExecutionSpace>(
-    // size);
-    // if (rc != 0)
-    // std::cout << "cudaMalloc_single: error check not successful, "
-    // "error count:"
-    // << rc << std::endl;
+    rc = benchmark_cudaMalloc_cudaMallocHostPinned_separate_arrays<
+        ValueType, Kokkos::DefaultExecutionSpace,
+        Kokkos::DefaultHostExecutionSpace>(size);
+    if (rc != 0)
+      std::cout << "cudaMalloc_cudaMallocHostPinned_separated: error check not "
+                   "successful, "
+                   "error count:"
+                << rc << std::endl;
   }
   Kokkos::finalize();
 
