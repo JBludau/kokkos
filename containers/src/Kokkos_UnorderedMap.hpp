@@ -366,7 +366,7 @@ class UnorderedMap {
     }
 
     //! Ensure that allocation properties are consistent.
-    using alloc_prop_t = std::decay_t<decltype(arg_prop)>;
+    using alloc_prop_t = Impl::remove_cvref_t<decltype(arg_prop)>;
     static_assert(alloc_prop_t::initialize,
                   "Allocation property 'initialize' should be true.");
     static_assert(
