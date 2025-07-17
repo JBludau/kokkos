@@ -64,24 +64,36 @@ namespace Kokkos {
 
 namespace Impl {
 
-template <typename ViewType, typename... P, typename Property, typename... Args>
-auto allocate_with_property_if_compatible(
-    const Impl::ViewCtorProp<P...> &alloc_prop,
-    [[maybe_unused]] const Property &property, Args &&...args) {
+template <typename ViewType, typename... P, typename... Args>
+auto allocate_without_initializing_if_possible(
+    const Impl::ViewCtorProp<P...> &alloc_prop, Args &&...args) {
   using alloc_prop_t = Impl::remove_cvref_t<decltype(alloc_prop)>;
 
   // if incompatible we don't add the property
-  if constexpr ((std::is_same_v<Property, Impl::WithoutInitializing_t> &&
-                 alloc_prop_t::sequential_host_init) ||
-                (std::is_same_v<Property, Impl::SequentialHostInit_t> &&
-                 !SpaceAccessibility<
-                     typename ViewType::execution_space::memory_space,
-                     HostSpace>::accessible))
+  if constexpr (alloc_prop_t::sequential_host_init)
     return ViewType(alloc_prop, std::forward<Args>(args)...);
   // otherwise we add it if unset
   else
-    return ViewType(Impl::with_properties_if_unset(alloc_prop, property),
-                    std::forward<Args>(args)...);
+    return ViewType(
+        Impl::with_properties_if_unset(alloc_prop, WithoutInitializing),
+        std::forward<Args>(args)...);
+}
+
+template <typename ViewType, typename... P, typename... Args>
+auto allocate_with_sequential_host_init_if_possible(
+    const Impl::ViewCtorProp<P...> &alloc_prop, Args &&...args) {
+  using alloc_prop_t = Impl::remove_cvref_t<decltype(alloc_prop)>;
+
+  // if incompatible we don't add the property
+  if constexpr (!SpaceAccessibility<
+                    typename ViewType::execution_space::memory_space,
+                    HostSpace>::accessible)
+    return ViewType(alloc_prop, std::forward<Args>(args)...);
+  // otherwise we add it if unset
+  else
+    return ViewType(
+        Impl::with_properties_if_unset(alloc_prop, SequentialHostInit),
+        std::forward<Args>(args)...);
 }
 }  // namespace Impl
 
@@ -387,15 +399,16 @@ class UnorderedMap {
         bitset_type(Kokkos::Impl::append_to_label(prop_copy, " - bitset"),
                     calculate_capacity(capacity_hint));
 
-    m_hash_lists = Impl::allocate_with_property_if_compatible<size_type_view>(
-        Kokkos::Impl::append_to_label(prop_copy, " - hash list"),
-        WithoutInitializing, Impl::find_hash_size(capacity()));
+    m_hash_lists =
+        Impl::allocate_without_initializing_if_possible<size_type_view>(
+            Kokkos::Impl::append_to_label(prop_copy, " - hash list"),
+            Impl::find_hash_size(capacity()));
 
-    m_next_index = Impl::allocate_with_property_if_compatible<size_type_view>(
-        Kokkos::Impl::append_to_label(prop_copy, " - next index"),
-        WithoutInitializing,
-        capacity() + 1);  // +1 so that the *_at functions can always return
-                          // a valid reference
+    m_next_index =
+        Impl::allocate_without_initializing_if_possible<size_type_view>(
+            Kokkos::Impl::append_to_label(prop_copy, " - next index"),
+            capacity() + 1);  // +1 so that the *_at functions can always return
+                              // a valid reference
 
     m_keys = key_type_view(Kokkos::Impl::append_to_label(prop_copy, " - keys"),
                            capacity());
@@ -474,9 +487,9 @@ class UnorderedMap {
 
     auto tmp =
         m_sequential_host_init
-            ? Impl::allocate_with_property_if_compatible<insertable_map_type>(
-                  view_alloc(), SequentialHostInit, requested_capacity,
-                  m_hasher, m_equal_to)
+            ? Impl::allocate_with_sequential_host_init_if_possible<
+                  insertable_map_type>(view_alloc(), requested_capacity,
+                                       m_hasher, m_equal_to)
             : insertable_map_type(requested_capacity, m_hasher, m_equal_to);
 
     if (curr_size) {
@@ -901,12 +914,11 @@ class UnorderedMap {
                       src.m_keys.extent(0));
     tmp.m_values =
         src.m_sequential_host_init
-            ? Impl::allocate_with_property_if_compatible<value_type_view>(
-                  view_alloc("UnorderedMap values"), SequentialHostInit,
-                  src.m_values.extent(0))
-            : Impl::allocate_with_property_if_compatible<value_type_view>(
-                  view_alloc("UnorderedMap values"), WithoutInitializing,
-                  src.m_values.extent(0));
+            ? Impl::allocate_with_sequential_host_init_if_possible<
+                  value_type_view>(view_alloc("UnorderedMap values"),
+                                   src.m_values.extent(0))
+            : Impl::allocate_without_initializing_if_possible<value_type_view>(
+                  view_alloc("UnorderedMap values"), src.m_values.extent(0));
 
     tmp.m_scalars = scalars_view("UnorderedMap scalars");
 
