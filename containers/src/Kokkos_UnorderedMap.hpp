@@ -82,8 +82,6 @@ auto allocate_without_initializing_if_possible(
 template <typename ViewType, typename... P, typename... Args>
 auto allocate_with_sequential_host_init_if_possible(
     const Impl::ViewCtorProp<P...> &alloc_prop, Args &&...args) {
-  using alloc_prop_t = Impl::remove_cvref_t<decltype(alloc_prop)>;
-
   // if incompatible we don't add the property
   if constexpr (!SpaceAccessibility<
                     typename ViewType::execution_space::memory_space,
