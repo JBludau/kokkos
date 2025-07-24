@@ -210,7 +210,10 @@ void CudaInternal::print_configuration(std::ostream &s) const {
     cudaDeviceProp prop;
     KOKKOS_IMPL_CUDA_SAFE_CALL(cudaGetDeviceProperties(&prop, i));
     s << "Kokkos::Cuda[ " << i << " ] " << prop.name;
-    if (m_cudaDev == i) s << " : Selected";
+    if (m_cudaDev == i)
+      s << " : Selected";
+    else
+      s << " : Not Selected";
     s << '\n'
       << "  Capability: " << prop.major << "." << prop.minor << '\n'
       << "  Total Global Memory: " << human_memory_size(prop.totalGlobalMem)

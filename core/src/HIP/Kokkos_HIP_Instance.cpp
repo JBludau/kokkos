@@ -113,7 +113,10 @@ void HIPInternal::print_configuration(std::ostream &s) const {
 
     s << "Kokkos::HIP[ " << i << " ] "
       << "gcnArch " << hipProp.gcnArchName;
-    if (m_hipDev == i) s << " : Selected";
+    if (m_hipDev == i)
+      s << " : Selected";
+    else
+      s << " : Not Selected";
     s << '\n'
       << "  Total Global Memory: "
       << ::Kokkos::Impl::human_memory_size(hipProp.totalGlobalMem) << '\n'
