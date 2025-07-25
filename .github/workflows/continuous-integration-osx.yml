@@ -69,6 +69,7 @@ jobs:
             -DKokkos_ENABLE_TESTS=On
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+            -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON
       - name: build
         run: cmake --build build --parallel $(sysctl -n hw.ncpu)
       - name: test

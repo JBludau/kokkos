@@ -54,6 +54,7 @@ pipeline {
                                 -DKokkos_ENABLE_TESTS=ON \
                                 -DKokkos_ENABLE_BENCHMARKS=ON \
                                 -DKokkos_ENABLE_EXAMPLES=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                                 -DKokkos_ENABLE_SERIAL=ON && \
                               cmake --build build --target install -j 8 && \
                               ctest --test-dir build --no-compress-output -T Test --verbose'''
@@ -92,6 +93,7 @@ pipeline {
                                 -DKokkos_ENABLE_OPENMP=ON \
                                 -DKokkos_ENABLE_LIBDL=OFF \
                                 -DKokkos_ENABLE_LIBQUADMATH=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                                 -DKokkos_ENABLE_SERIAL=ON \
                               .. && \
                               make -j8 && ctest --no-compress-output -T Test --verbose && gcc -I$PWD/../core/src/ ../core/unit_test/tools/TestCInterface.c'''
@@ -127,6 +129,7 @@ pipeline {
                                 -DKokkos_ENABLE_TESTS=ON \
                                 -DKokkos_ENABLE_BENCHMARKS=ON \
                                 -DKokkos_ENABLE_HIP=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j16 && ctest --no-compress-output -T Test --verbose'''
                     }
@@ -173,6 +176,7 @@ pipeline {
                                 -DKokkos_ENABLE_CUDA_UVM=ON \
                                 -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON \
                                 -DKokkos_ENABLE_DEPRECATED_CODE_4=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                                 \
                                 -DCMAKE_INSTALL_PREFIX=${PWD}/../install \
                               .. && \
@@ -237,6 +241,7 @@ pipeline {
                                 -DKokkos_ENABLE_TESTS=ON \
                                 -DKokkos_ENABLE_OPENACC=ON \
                                 -DKokkos_ARCH_VOLTA70=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j8 && ctest --no-compress-output -T Test --verbose'''
                     }
@@ -278,6 +283,7 @@ pipeline {
                                 -DKokkos_ENABLE_TESTS=ON \
                                 -DKokkos_ENABLE_CUDA=ON \
                                 -DKokkos_ENABLE_OPENMP=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j8 && ctest --no-compress-output -T Test --verbose'''
                     }
@@ -317,6 +323,7 @@ pipeline {
                                 -DKokkos_ENABLE_SYCL_RELOCATABLE_DEVICE_CODE=ON \
                                 -DKokkos_ENABLE_UNSUPPORTED_ARCHS=ON \
                                 -DCMAKE_CXX_STANDARD=17 \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j8 && ctest --no-compress-output -T Test --verbose'''
                     }
@@ -361,6 +368,7 @@ pipeline {
                                 -DKokkos_ENABLE_OPENMP=ON \
                                 -DKokkos_ENABLE_IMPL_MDSPAN=OFF \
                                 -DKokkos_ENABLE_HIP_MULTIPLE_KERNEL_INSTANTIATIONS=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j16 && ctest --no-compress-output -T Test --verbose'''
                     }
@@ -402,6 +410,7 @@ pipeline {
                                 -DKokkos_ENABLE_TESTS=ON \
                                 -DKokkos_ENABLE_BENCHMARKS=ON \
                                 -DKokkos_ENABLE_HIP=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j16 && ctest --no-compress-output -T Test --verbose'''
                     }
@@ -484,6 +493,7 @@ pipeline {
                                 -DKokkos_ENABLE_OPENMPTARGET=ON \
                                 -DKokkos_ARCH_VOLTA70=ON \
                                 -DCMAKE_CXX_STANDARD=17 \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j8 && ctest --no-compress-output -T Test --verbose'''
                     }
@@ -522,6 +532,7 @@ pipeline {
                                 -DKokkos_ENABLE_CUDA=ON \
                                 -DKokkos_ENABLE_TUNING=ON \
                                 -DKokkos_ARCH_VOLTA70=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j8 && ctest --no-compress-output -T Test --verbose'''
                     }
@@ -561,6 +572,7 @@ pipeline {
                                 -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON \
                                 -DKokkos_ENABLE_TUNING=ON \
                                 -DKokkos_ARCH_VOLTA70=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j8 && ctest --no-compress-output -T Test --verbose'''
                     }
@@ -603,6 +615,7 @@ pipeline {
                                 -DKokkos_ENABLE_OPENMP=ON \
                                 -DKokkos_ENABLE_IMPL_MDSPAN=OFF \
                                 -DKokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC=ON \
+                                -DKokkos_ENABLE_IMPL_VIEW_LEGACY=ON \
                               .. && \
                               make -j8 && ctest --no-compress-output -T Test --verbose && \
                               cd ../example/build_cmake_in_tree && \
