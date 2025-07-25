@@ -102,6 +102,7 @@ pipeline {
                           export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-DKokkos_ENABLE_TESTS=ON" && \
                           export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-DKokkos_ENABLE_DEPRECATED_CODE_4=ON" && \
                           export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-DKokkos_ENABLE_SERIAL=ON" && \
+                          export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_IMPL_VIEW_LEGACY=ON" \
                           ctest -VV -D CDASH_MODEL="Nightly" -D CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS}" -S scripts/CTestRun.cmake -D CTEST_SITE="ornl-jenkins" -D CTEST_BUILD_NAME="GCC-15-CXX26"
                           '''
                     }
@@ -141,6 +142,7 @@ pipeline {
                               export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-DKokkos_ENABLE_BENCHMARKS=ON" && \
                               export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-DKokkos_ENABLE_EXAMPLES=ON" && \
                               export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-DKokkos_ENABLE_HIP=ON" && \
+                              export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_IMPL_VIEW_LEGACY=ON" \
                               ctest -VV -D CDASH_MODEL="Nightly" -D CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS}" -S scripts/CTestRun.cmake -D CTEST_SITE="ornl-jenkins" -D CTEST_BUILD_NAME="HIP-ROCM-6.4-MI100-RDC-CXX20"
                               '''
                     }
@@ -180,6 +182,7 @@ pipeline {
                               export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-DKokkos_ENABLE_BENCHMARKS=ON" && \
                               export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-DKokkos_ENABLE_EXAMPLES=ON" && \
                               export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-DKokkos_ENABLE_HIP=ON" && \
+                              export ENV_CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS};-D Kokkos_ENABLE_IMPL_VIEW_LEGACY=ON" \
                               ctest -VV -D CDASH_MODEL="Nightly" -D CMAKE_OPTIONS="${ENV_CMAKE_OPTIONS}" -S scripts/CTestRun.cmake -D CTEST_SITE="ornl-jenkins" -D CTEST_BUILD_NAME="HIP-ROCM-6.4-MI210-CXX23"
                               '''
                     }
