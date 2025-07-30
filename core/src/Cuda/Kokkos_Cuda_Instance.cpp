@@ -202,7 +202,7 @@ void CudaInternal::print_configuration(std::ostream &s) const {
   s << "macro  KOKKOS_ENABLE_CUDA      : defined\n";
 #endif
 #if defined(CUDA_VERSION)
-  s << "macro  CUDA_VERSION          = " << CUDA_VERSION << " = version "
+  s << "macro  CUDA_VERSION          : " << CUDA_VERSION << " = version "
     << CUDA_VERSION / 1000 << "." << (CUDA_VERSION % 1000) / 10 << '\n';
 #endif
 

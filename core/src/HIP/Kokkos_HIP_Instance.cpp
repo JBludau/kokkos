@@ -87,7 +87,7 @@ int HIPInternal::concurrency() {
 void HIPInternal::print_configuration(std::ostream &s) const {
   s << "macro  KOKKOS_ENABLE_HIP : defined" << '\n';
 #if defined(HIP_VERSION)
-  s << "macro  HIP_VERSION = " << HIP_VERSION << " = version "
+  s << "macro  HIP_VERSION : " << HIP_VERSION << " = version "
     << HIP_VERSION_MAJOR << '.' << HIP_VERSION_MINOR << '.' << HIP_VERSION_PATCH
     << '\n';
 #endif
