@@ -962,7 +962,7 @@ endfunction()
 #       FLAGS       --> flags to check
 #
 function(kokkos_check_flags)
-  cmake_parse_arguments(INP "COMPILER;LINKER" "LANGUAGE" "FLAGS" ${ARGN})
+  cmake_parse_arguments(INP "COMPILER;LINKER" "LANGUAGE" "FLAGS;LINKER_FLAGS" ${ARGN})
 
   # do nothing if no flags are given
   if(NOT INP_FLAGS)
@@ -982,6 +982,9 @@ function(kokkos_check_flags)
     include(CheckCompilerFlag)
     #delete cache so we always do the check
     unset(KOKKOS_COMPILE_OPTIONS_CHECK CACHE)
+    if(INP_LINKER_FLAGS)
+      set(CMAKE_REQUIRED_LINK_OPTIONS ${INP_LINKER_FLAGS})
+    endif()
     check_compiler_flag(${INP_LANGUAGE} "${QUOTED_FLAGS}" KOKKOS_COMPILE_OPTIONS_CHECK)
     if(NOT KOKKOS_COMPILE_OPTIONS_CHECK)
       message(
