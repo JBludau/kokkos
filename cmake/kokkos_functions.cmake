@@ -983,7 +983,11 @@ function(kokkos_check_flags)
     #delete cache so we always do the check
     unset(KOKKOS_COMPILE_OPTIONS_CHECK CACHE)
     if(INP_LINKER_FLAGS)
-      set(CMAKE_REQUIRED_LINK_OPTIONS ${INP_LINKER_FLAGS})
+      #check_compiler/linker_flag requires a whitespace separated list
+      string(REPLACE ";" " " WHITESPACE_LINKER_FLAGS "${INP_LINKER_FLAGS}")
+      # icpx adds "-device ..." options that need quotes (which CMake removes). We need to add them here again.
+      string(REGEX REPLACE "(-device [A-Za-z0-9_\\\\.]*)" "\"\\1\"" QUOTED_LINKER_FLAGS "${WHITESPACE_LINKER_FLAGS}")
+      set(CMAKE_REQUIRED_LINK_OPTIONS "${QUOTED_LINKER_FLAGS}")
     endif()
     check_compiler_flag(${INP_LANGUAGE} "${QUOTED_FLAGS}" KOKKOS_COMPILE_OPTIONS_CHECK)
     if(NOT KOKKOS_COMPILE_OPTIONS_CHECK)
