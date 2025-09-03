@@ -203,9 +203,9 @@ pipeline {
                               cd ../../build_cmake_installed_multilanguage && \
                               rm -rf build && mkdir -p build && cd build && \
                               cmake \
-                                -DCMAKE_CXX_COMPILER=g++-8 \
+                                -DCMAKE_CXX_COMPILER=g++-11 \
                                 -DCMAKE_CXX_FLAGS=-Werror \
-                                -DCMAKE_CXX_STANDARD=17 \
+                                -DCMAKE_CXX_STANDARD=20 \
                               .. && \
                               make -j8 && ctest --verbose && \
                               cd ../.. && \
