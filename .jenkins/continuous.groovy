@@ -143,7 +143,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.nvcc'
                             dir 'scripts/docker'
-                            additionalBuildArgs '--build-arg BASE=nvcr.io/nvidia/cuda:12.2.2-devel-ubuntu22.04@sha256:5f603101462baa721ff6ddc44af82f6e9ba7cbd92a424c9f9f348e6e9d6d64c3 --build-arg ADDITIONAL_PACKAGES="gfortran clang" --build-arg CMAKE_VERSION=3.22.1'
+                            additionalBuildArgs '--build-arg BASE=nvcr.io/nvidia/cuda:12.2.2-devel-ubuntu22.04@sha256:5f603101462baa721ff6ddc44af82f6e9ba7cbd92a424c9f9f348e6e9d6d64c3 --build-arg ADDITIONAL_PACKAGES="gfortran clang" --build-arg CMAKE_VERSION=3.25.3'
                             label 'nvidia-docker && (volta || ampere)'
                             args '-v /tmp/ccache.kokkos:/tmp/ccache --env NVIDIA_VISIBLE_DEVICES=$NVIDIA_VISIBLE_DEVICES'
                         }
