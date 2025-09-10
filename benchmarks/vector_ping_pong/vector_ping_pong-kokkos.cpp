@@ -15,7 +15,10 @@
 //@HEADER
 
 #include "Kokkos_Core.hpp"
+#include "Kokkos_Macros.hpp"
+
 #include <iostream>
+#include <fstream>
 
 #include <sys/time.h>
 
@@ -24,11 +27,10 @@ template <typename MemorySpacePing, typename MemorySpacePong,
           typename ExecutionSpaceFirstTouchPing,
           typename ExecutionSpaceFirstTouchPong, bool needs_deep_copy,
           typename VectorValue, typename VectorIndex>
-int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
-                  VectorIndex size) {
-  int warmup_runs = 10;
-  int num_runs    = 100;
-
+std::tuple<int, double> run_benchmark(VectorValue* ping_data,
+                                      VectorValue* pong_data, VectorIndex size,
+                                      unsigned warmup_runs,
+                                      unsigned num_pingpongs) {
   auto warmup_view =
       Kokkos::View<VectorValue*, MemorySpacePing>{"warmup", size};
 
@@ -36,7 +38,7 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   auto pong_view = Kokkos::View<VectorValue*, MemorySpacePong>{pong_data, size};
 
   // do warmup with another view so we don't mess up the placement
-  for (int i = 0; i < warmup_runs; ++i) {
+  for (unsigned i = 0; i < warmup_runs; ++i) {
     Kokkos::parallel_for(
         "warmup inc", Kokkos::RangePolicy(ExecutionSpacePing(), 0, size),
         KOKKOS_LAMBDA(const VectorIndex idx) { ++warmup_view(idx); });
@@ -50,20 +52,22 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   Kokkos::parallel_for(
       "first_touch_ping",
       Kokkos::RangePolicy(ExecutionSpaceFirstTouchPing(), 0, size),
-      KOKKOS_LAMBDA(const VectorIndex i) { ping_view(i) = VectorValue{}; });
+      KOKKOS_LAMBDA(const VectorIndex idx) { ping_view(idx) = VectorValue{}; });
   Kokkos::fence();
-  std::cout << "First touch ping " << first_touch_ping.seconds() << std::endl;
+  // std::cout << "First touch ping " << first_touch_ping.seconds() <<
+  // std::endl;
 
   Kokkos::Timer first_touch_pong;
   Kokkos::parallel_for(
       "first_touch_pong",
       Kokkos::RangePolicy(ExecutionSpaceFirstTouchPong(), 0, size),
-      KOKKOS_LAMBDA(const VectorIndex i) { pong_view(i) = VectorValue{}; });
+      KOKKOS_LAMBDA(const VectorIndex idx) { pong_view(idx) = VectorValue{}; });
   Kokkos::fence();
-  std::cout << "First touch pong " << first_touch_pong.seconds() << std::endl;
+  // std::cout << "First touch pong " << first_touch_pong.seconds() <<
+  // std::endl;
 
   Kokkos::Timer timer;
-  for (int i = 0; i < num_runs; ++i) {
+  for (unsigned i = 0; i < num_pingpongs; ++i) {
     if constexpr (needs_deep_copy)
       Kokkos::deep_copy(ping_view, pong_view);
     else
@@ -81,13 +85,6 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   }
   Kokkos::fence();
   auto totalTime = timer.seconds();
-  std::cout << "Elapsed time " << totalTime << " for " << num_runs
-            << " runs with vectorlength " << size
-            << " resulting average bandwitdh "
-            << 1.0e-6 * 2.0 * num_runs * size * (double)sizeof(VectorValue) /
-                   totalTime
-            << " MB/s" << std::endl;
-  // Kokkos::fence();
 
   // check for errors
   int error_count = 0;
@@ -96,188 +93,214 @@ int run_benchmark(VectorValue* ping_data, VectorValue* pong_data,
   Kokkos::parallel_reduce(
       "error_check", Kokkos::RangePolicy(ExecutionSpacePing(), 0, size),
       KOKKOS_LAMBDA(const VectorIndex i, int& error) {
-        error += (ping_view(i) == num_runs * 2) ? 0 : 1;
+        error += (ping_view(i) == static_cast<VectorValue>(num_pingpongs) * 2)
+                     ? 0
+                     : 1;
       },
       error_count);
   Kokkos::fence();
-  return error_count;
+  return std::make_tuple(error_count, totalTime);
 }
 
-///////////////////////NEW
+//// ALLOCATOR DEALLOCATOR
+struct ManagedMalloc {
+  template <typename T>
+  static constexpr T* allocate(size_t size) {
+    T* ptr;
+#ifdef KOKKOS_ENABLE_CUDA
+    cudaMallocManaged(&ptr, size * sizeof(T));
+#elif defined KOKKOS_ENABLE_HIP
+    hipMallocManaged(&ptr, size * sizeof(T));
+#endif
+    return ptr;
+  }
+
+  template <typename T>
+  static constexpr void deallocate(T* ptr) {
+#ifdef KOKKOS_ENABLE_CUDA
+    cudaFree(ptr);
+#elif defined KOKKOS_ENABLE_HIP
+    hipFree(ptr);
+#endif
+  }
+};
+
+struct HostPinnedMalloc {
+  template <typename T>
+  static constexpr T* allocate(size_t size) {
+    T* ptr;
+#ifdef KOKKOS_ENABLE_CUDA
+    cudaMallocHost(&ptr, size * sizeof(T));
+#elif defined KOKKOS_ENABLE_HIP
+    hipHostMalloc(&ptr, size * sizeof(T));
+#endif
+    return ptr;
+  }
+
+  template <typename T>
+  static constexpr void deallocate(T* ptr) {
+#ifdef KOKKOS_ENABLE_CUDA
+    cudaFree(ptr);
+#elif defined KOKKOS_ENABLE_HIP
+    hipFree(ptr);
+#endif
+  }
+};
+
+struct DeviceMalloc {
+  template <typename T>
+  static constexpr T* allocate(size_t size) {
+    T* ptr;
+#ifdef KOKKOS_ENABLE_CUDA
+    cudaMalloc(&ptr, size * sizeof(T));
+#elif defined KOKKOS_ENABLE_HIP
+    hipMalloc(&ptr, size * sizeof(T));
+#endif
+    return ptr;
+  }
+
+  template <typename T>
+  static constexpr void deallocate(T* ptr) {
+#ifdef KOKKOS_ENABLE_CUDA
+    cudaFree(ptr);
+#elif defined KOKKOS_ENABLE_HIP
+    hipFree(ptr);
+#endif
+  }
+};
+
+struct StdMalloc {
+  template <typename T>
+  static constexpr T* allocate(size_t size) {
+    return std::malloc(size * sizeof(T));
+  }
+
+  template <typename T>
+  static constexpr void deallocate(T* ptr) {
+    std::free(ptr);
+  }
+};
+
+struct StdNew {
+  template <typename T>
+  static constexpr T* allocate(size_t size) {
+    return new T[size];
+  }
+
+  template <typename T>
+  static constexpr void deallocate(T* ptr) {
+    delete[] ptr;
+  }
+};
+
+struct NONE {};
+
+///////////////////////single and double array
 template <typename ValueType, typename ExecutionSpacePing,
           typename ExecutionSpacePong, typename ExecutionSpaceFirstTouchPing,
-          typename ExecutionSpaceFirstTouchPong>
-int benchmark_new_separate_arrays(unsigned size) {
-  ValueType* vec_ping = new ValueType[size];
-  ValueType* vec_pong = new ValueType[size];
+          typename ExecutionSpaceFirstTouchPong, typename AllocatorPing,
+          typename AllocatorPong, typename IndexType>
+auto benchmark_views(IndexType size, int warmups, int pingpongs, AllocatorPing,
+                     AllocatorPong) {
+  ValueType* vec_ping = AllocatorPing::template allocate<ValueType>(size);
+  ValueType* vec_pong = AllocatorPong::template allocate<ValueType>(size);
 
-  int rc =
+  auto rc =
       run_benchmark<Kokkos::SharedSpace, Kokkos::SharedSpace,
                     ExecutionSpacePing, ExecutionSpacePong,
                     ExecutionSpaceFirstTouchPing, ExecutionSpaceFirstTouchPong,
-                    true>(vec_ping, vec_pong, size);
+                    true>(vec_ping, vec_pong, size, warmups, pingpongs);
 
-  delete[] vec_ping;
-  delete[] vec_pong;
+  AllocatorPing::template deallocate(vec_ping);
+  AllocatorPong::template deallocate(vec_pong);
 
   return rc;
 }
 
 template <typename ValueType, typename ExecutionSpacePing,
           typename ExecutionSpacePong, typename ExecutionSpaceFirstTouchPing,
-          typename ExecutionSpaceFirstTouchPong>
-int benchmark_new_single_array(unsigned size) {
-  ValueType* vec_ping_pong = new ValueType[size];
+          typename ExecutionSpaceFirstTouchPong, typename AllocatorPingPong,
+          typename IndexType>
+auto benchmark_views(IndexType size, int warmups, int pingpongs,
+                     AllocatorPingPong, NONE) {
+  ValueType* vec_ping_pong =
+      AllocatorPingPong::template allocate<ValueType>(size);
 
-  int rc =
-      run_benchmark<Kokkos::SharedSpace, Kokkos::SharedSpace,
-                    ExecutionSpacePing, ExecutionSpacePong,
-                    ExecutionSpaceFirstTouchPing, ExecutionSpaceFirstTouchPong,
-                    false>(vec_ping_pong, vec_ping_pong, size);
+  auto rc = run_benchmark<Kokkos::SharedSpace, Kokkos::SharedSpace,
+                          ExecutionSpacePing, ExecutionSpacePong,
+                          ExecutionSpaceFirstTouchPing,
+                          ExecutionSpaceFirstTouchPong, false>(
+      vec_ping_pong, vec_ping_pong, size, warmups, pingpongs);
 
-  delete[] vec_ping_pong;
-
-  return rc;
-}
-
-/////////////////////CUDA_MALLOC_MANAGED
-template <typename ValueType, typename ExecutionSpacePing,
-          typename ExecutionSpacePong>
-int benchmark_cudaMallocManaged_single_array(unsigned size) {
-  ValueType* vec_ping_pong;
-  cudaMallocManaged(&vec_ping_pong, size * sizeof(ValueType));
-
-  int rc = run_benchmark<
-      Kokkos::CudaUVMSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, false>(vec_ping_pong, vec_ping_pong,
-                                                size);
-
-  cudaFree(vec_ping_pong);
+  AllocatorPingPong::template deallocate(vec_ping_pong);
 
   return rc;
 }
 
-template <typename ValueType, typename ExecutionSpacePing,
-          typename ExecutionSpacePong>
-int benchmark_cudaMallocManaged_separate_arrays(unsigned size) {
-  ValueType* vec_ping;
-  ValueType* vec_pong;
-  cudaMallocManaged(&vec_ping, size * sizeof(ValueType));
-  cudaMallocManaged(&vec_pong, size * sizeof(ValueType));
+template <typename ValueType, typename IndexType, typename AllocatorPing,
+          typename AllocatorPong = NONE>
+void benchmark_and_print(std::ostream& out, unsigned const rep,
+                         IndexType array_size, unsigned warmups,
+                         unsigned pingpongs, AllocatorPing Aping,
+                         AllocatorPong Apong) {
+  auto [rc, timing] = benchmark_views<ValueType, Kokkos::DefaultExecutionSpace,
+                                      Kokkos::DefaultHostExecutionSpace,
+                                      Kokkos::DefaultExecutionSpace,
+                                      Kokkos::DefaultHostExecutionSpace>(
+      array_size, warmups, pingpongs, Aping, Apong);
+  if (rc != 0) {
+    std::cout << "WRONG RESULT in rep " << rep << " array_size " << array_size
+              << " warmups " << warmups << " pingpongs " << pingpongs
+              << ".  exiting!" << std::endl;
+    std::exit(rc);
+  }
 
-  int rc = run_benchmark<
-      Kokkos::CudaUVMSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, true>(vec_ping, vec_pong, size);
-
-  cudaFree(vec_ping);
-  cudaFree(vec_pong);
-
-  return rc;
-}
-
-/////////////////////CUDA_MALLOC
-template <typename ValueType, typename ExecutionSpacePing,
-          typename ExecutionSpacePong>
-int benchmark_cudaMalloc_separate_arrays(unsigned size) {
-  ValueType* vec_ping;
-  ValueType* vec_pong;
-  cudaMalloc(&vec_ping, size * sizeof(ValueType));
-  cudaMallocHostPinned(&vec_pong, size * sizeof(ValueType));
-
-  int rc = run_benchmark<
-      Kokkos::CudaSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, true>(vec_ping, vec_pong, size);
-
-  cudaFree(vec_ping);
-  cudaFree(vec_pong);
-
-  return rc;
-}
-
-template <typename ValueType, typename ExecutionSpacePing,
-          typename ExecutionSpacePong>
-int benchmark_cudaMalloc_cudaMallocHostPinned_separate_arrays(unsigned size) {
-  ValueType* vec_ping;
-  ValueType* vec_pong;
-  cudaMalloc(&vec_ping, size * sizeof(ValueType));
-  cudaMallocHost(&vec_pong, size * sizeof(ValueType));
-
-  int rc = run_benchmark<
-      Kokkos::CudaSpace, Kokkos::HostSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, Kokkos::DefaultExecutionSpace,
-      Kokkos::DefaultHostExecutionSpace, true>(vec_ping, vec_pong, size);
-
-  cudaFree(vec_ping);
-  cudaFree(vec_pong);
-
-  return rc;
+  double bw = 1.0e-6 * 2.0 * pingpongs * array_size *
+              (double)sizeof(ValueType) / timing;
+  out << rep << " , " << array_size << " , " << warmups << " , " << pingpongs
+      << " , " << bw << " , " << typeid(AllocatorPing()).name() << " , "
+      << typeid(AllocatorPong()).name() << "\n";
 }
 
 int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
   Kokkos::initialize(argc, argv);
   {
     using ValueType = int;
-    unsigned size   = 1 << 25;
+    using IndexType = int;
 
-    ////////////////////////NEW
-    int rc = benchmark_new_separate_arrays<ValueType, Kokkos::DefaultExecutionSpace,
-                                      Kokkos::DefaultHostExecutionSpace,Kokkos::DefaultExecutionSpace,
-                                      Kokkos::DefaultHostExecutionSpace
-    >(size);
-     if (rc != 0)
-     std::cout << "new_separated: error check not successful, "
-     "error count:"
-     << rc << std::endl;
+    if (argc < 8)
+      printf(
+          "Arguments: filename repetitions array_size array_size_steps "
+          "warmup_runs warmpu_run_step ping_pongs ping_pong_step /n");
 
-    rc = benchmark_new_single_array<ValueType,
-    Kokkos::DefaultExecutionSpace,
-    Kokkos::DefaultHostExecutionSpace,
-    Kokkos::DefaultExecutionSpace,
-    Kokkos::DefaultHostExecutionSpace
-    >(size);
+    std::string filename(argv[1]);
+    int repetitions           = std::stoi(argv[2]);
+    IndexType array_size      = std::stoi(argv[3]);
+    IndexType array_size_step = std::stoi(argv[4]);
+    int warmup_runs           = std::stoi(argv[5]);
+    int warmup_run_step       = std::stoi(argv[6]);
+    int ping_pongs            = std::stoi(argv[7]);
+    int ping_pong_step        = std::stoi(argv[8]);
 
-    if (rc != 0)
-    std::cout << "new_single: error check not successful, "
-    "error count:"
-    << rc << std::endl;
+    // std::ofstream outfile;
+    // outfile.open(filename + typeid(IndexType()).name() + " " +
+    //                  typeid(ValueType()).name() + ".csv",
+    //              std::ios::out);
 
+    Kokkos::print_configuration(std::cout);
 
-    //////////////////////CUDA_MALLOC_MANAGED
-    // rc = benchmark_cudaMallocManaged_separate_arrays<
-    // ValueType, Kokkos::DefaultExecutionSpace,
-    // Kokkos::DefaultHostExecutionSpace>(size);
-    // if (rc != 0)
-    // std::cout << "cudaMallocManaged_separated: error check not successful, "
-    // "error count:"
-    // << rc << std::endl;
-    // rc = benchmark_cudaMallocManaged_single_array<
-    // ValueType, Kokkos::DefaultExecutionSpace,
-    // Kokkos::DefaultHostExecutionSpace>(size);
-    // if (rc != 0)
-    // std::cout << "cudaMallocManaged_single: error check not successful, "
-    // "error count:"
-    // << rc << std::endl;
+    std::cout << "# repetition, arraysize, warmups, pingpongs, bandwidth, "
+                 "allocatorPing, "
+                 "allocatorPong"
+              << std::endl;
 
-    // ////////////////////CUDA_MALLOC
-    // rc =
-    // benchmark_cudaMalloc_separate_arrays<ValueType,
-    // Kokkos::DefaultExecutionSpace,
-    // Kokkos::DefaultHostExecutionSpace>(
-    // size);
-    // if (rc != 0)
-    // std::cout << "cudaMalloc_separated: error check not successful, "
-    // "error count:"
-    // << rc << std::endl;
-    // rc = benchmark_cudaMalloc_cudaMallocHostPinned_separate_arrays<
-    // ValueType, Kokkos::DefaultExecutionSpace,
-    // Kokkos::DefaultHostExecutionSpace>(size);
-    // if (rc != 0)
-    // std::cout << "cudaMalloc_cudaMallocHostPinned_separated: error check not
-    // " "successful, " "error count:"
-    // << rc << std::endl;
+    for (int pp = 1; pp <= ping_pongs; pp += ping_pong_step)
+      for (int wu = 1; wu <= warmup_runs; wu += warmup_run_step)
+        for (IndexType as = 1; as <= array_size; as += array_size_step)
+          for (int rep = 0; rep <= repetitions; ++rep) {
+            benchmark_and_print<ValueType>(std::cout, rep, as, wu, pp,
+                                           ManagedMalloc(), ManagedMalloc());
+          }
   }
   Kokkos::finalize();
 
