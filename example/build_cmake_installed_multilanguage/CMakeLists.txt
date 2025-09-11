@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.25.2)
 
 # Projects can safely mix languages - must have C++ support
 # Kokkos flags will only apply to C++ files
-project(Example CXX Fortran)
+project(Example CXX)
 
 # Look for an installed Kokkos
 find_package(Kokkos)
@@ -32,7 +32,7 @@ add_library(cxx_lib library.cpp)
 target_link_libraries(cxx_lib PUBLIC Kokkos::kokkos)
 
 #use both in an executable
-add_executable(example cmake_example.cpp foo.f)
+add_executable(example cmake_example.cpp)
 
 target_link_libraries(example PUBLIC language_lib cxx_lib)
 
