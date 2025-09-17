@@ -270,10 +270,10 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
 
     if (argc < 8)
       printf(
-          "Arguments: filename repetitions array_size array_size_steps "
+          "Arguments: mode repetitions array_size array_size_steps "
           "warmup_runs warmpu_run_step ping_pongs ping_pong_step /n");
 
-    std::string filename(argv[1]);
+    const std::string mode(argv[1]);
     int repetitions           = std::stoi(argv[2]);
     IndexType array_size      = std::stoi(argv[3]);
     IndexType array_size_step = std::stoi(argv[4]);
@@ -282,25 +282,109 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
     int ping_pongs            = std::stoi(argv[7]);
     int ping_pong_step        = std::stoi(argv[8]);
 
-    // std::ofstream outfile;
-    // outfile.open(filename + typeid(IndexType()).name() + " " +
-    //                  typeid(ValueType()).name() + ".csv",
-    //              std::ios::out);
+    std::ofstream outfile;
+    outfile.open(mode + ".csv", std::ios::out);
 
-    Kokkos::print_configuration(std::cout);
+    Kokkos::print_configuration(outfile);
 
-    std::cout << "# repetition, arraysize, warmups, pingpongs, bandwidth, "
-                 "allocatorPing, "
-                 "allocatorPong"
-              << std::endl;
+    outfile << "# repetition, arraysize, warmups, pingpongs, bandwidth, "
+               "allocatorPing, "
+               "allocatorPong"
+            << std::endl;
 
     for (int pp = 1; pp <= ping_pongs; pp += ping_pong_step)
       for (int wu = 1; wu <= warmup_runs; wu += warmup_run_step)
         for (IndexType as = 1; as <= array_size; as += array_size_step)
           for (int rep = 0; rep <= repetitions; ++rep) {
-            benchmark_and_print<ValueType>(std::cout, rep, as, wu, pp,
-                                           ManagedMalloc(), ManagedMalloc());
+            // TWO VIEWS
+            // MANAGED
+            if (mode == "managed-managed")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             ManagedMalloc(), ManagedMalloc());
+            else if (mode == "managed-new")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             ManagedMalloc(), StdNew());
+            else if (mode == "managed-malloc")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             ManagedMalloc(), StdMalloc());
+            else if (mode == "managed-hostpinned")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             ManagedMalloc(),
+                                             HostPinnedMalloc());
+            else if (mode == "managed-device")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             ManagedMalloc(), DeviceMalloc());
+
+            // DEVICE
+            else if (mode == "device-managed")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             DeviceMalloc(), ManagedMalloc());
+            else if (mode == "device-new")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             DeviceMalloc(), StdNew());
+            else if (mode == "device-malloc")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             DeviceMalloc(), StdMalloc());
+            else if (mode == "device-hostpinned")
+              benchmark_and_print<ValueType>(
+                  outfile, rep, as, wu, pp, DeviceMalloc(), HostPinnedMalloc());
+            else if (mode == "device-device")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             DeviceMalloc(), DeviceMalloc());
+
+            // HostPinned
+            else if (mode == "hostpinned-managed")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             DeviceMalloc(), ManagedMalloc());
+            else if (mode == "hostpinned-new")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             DeviceMalloc(), StdNew());
+            else if (mode == "hostpinned-malloc")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             DeviceMalloc(), StdMalloc());
+            else if (mode == "hostpinned-hostpinned")
+              benchmark_and_print<ValueType>(
+                  outfile, rep, as, wu, pp, DeviceMalloc(), HostPinnedMalloc());
+            else if (mode == "hostpinned-device")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             DeviceMalloc(), DeviceMalloc());
+
+            // NEW
+            else if (mode == "new-managed")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp, StdNew(),
+                                             ManagedMalloc());
+            else if (mode == "new-new")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp, StdNew(),
+                                             StdNew());
+            else if (mode == "new-malloc")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp, StdNew(),
+                                             StdMalloc());
+            else if (mode == "new-hostpinned")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp, StdNew(),
+                                             HostPinnedMalloc());
+            else if (mode == "new-device")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp, StdNew(),
+                                             DeviceMalloc());
+
+            // ONE VIEW
+            // MANAGED
+            else if (mode == "managed-none")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             ManagedMalloc(), NONE());
+            else if (mode == "hostpinned-none")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             ManagedMalloc(), NONE());
+            else if (mode == "device-none")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             DeviceMalloc(), NONE());
+            else if (mode == "malloc-none")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp,
+                                             StdMalloc(), NONE());
+            else if (mode == "new-none")
+              benchmark_and_print<ValueType>(outfile, rep, as, wu, pp, StdNew(),
+                                             NONE());
           }
+    outfile.close();
   }
   Kokkos::finalize();
 
