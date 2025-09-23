@@ -19,6 +19,8 @@
 
 #include <impl/Kokkos_NvidiaGpuArchitectures.hpp>
 
+#ifdef KOKKOS_IMPL_ARCH_NVIDIA_GPU
+
 #if KOKKOS_IMPL_ARCH_NVIDIA_GPU < 60
 #define DESUL_CUDA_ARCH_IS_PRE_PASCAL
 #endif
@@ -29,6 +31,8 @@
 
 #if KOKKOS_IMPL_ARCH_NVIDIA_GPU < 90
 #define DESUL_CUDA_ARCH_IS_PRE_HOPPER
+#endif
+
 #endif
 
 #endif
