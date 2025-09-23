@@ -543,7 +543,6 @@ TEST(TEST_CATEGORY, atomics) {
 #endif
 
 #if defined(KOKKOS_ENABLE_CUDA) && (CUDA_VERSION >= 12080)
-  // Loop<__int128_t, TEST_EXECSPACE>(100, 1);
   Loop<__int128_t, TEST_EXECSPACE>(100, 2);
   Loop<__int128_t, TEST_EXECSPACE>(100, 3);
 #endif
