@@ -12,7 +12,7 @@ do
       do
          for variation in "${variations[@]}"
          do
-            Kokkos_vector_ping_pong "$variation" 10 "$((size))" "${warmups}" "${pingpongs}" "${stride}"
+            ./Kokkos_vector_ping_pong "$variation" 10 "$((size))" "${warmups}" "${pingpongs}" "${stride}"
          done
        done
     done
