@@ -48,23 +48,23 @@ std::tuple<int, double> run_benchmark(VectorValue* ping_data,
   }
   Kokkos::fence();
 
-  Kokkos::Timer first_touch_ping{};
   Kokkos::parallel_for(
       "first_touch_ping",
       Kokkos::RangePolicy(ExecutionSpaceFirstTouchPing(), 0, size),
       KOKKOS_LAMBDA(const VectorIndex idx) { ping_view(idx) = VectorValue{}; });
   Kokkos::fence();
-  // std::cout << "First touch ping " << first_touch_ping.seconds() <<
-  // std::endl;
 
-  Kokkos::Timer first_touch_pong;
-  Kokkos::parallel_for(
-      "first_touch_pong",
-      Kokkos::RangePolicy(ExecutionSpaceFirstTouchPong(), 0, size),
-      KOKKOS_LAMBDA(const VectorIndex idx) { pong_view(idx) = VectorValue{}; });
-  Kokkos::fence();
-  // std::cout << "First touch pong " << first_touch_pong.seconds() <<
-  // std::endl;
+  // if it needs a deepcopy there are two arrays, thus it also needs a pong
+  // first touch
+  if constexpr (needs_deep_copy) {
+    Kokkos::parallel_for(
+        "first_touch_pong",
+        Kokkos::RangePolicy(ExecutionSpaceFirstTouchPong(), 0, size),
+        KOKKOS_LAMBDA(const VectorIndex idx) {
+          pong_view(idx) = VectorValue{};
+        });
+    Kokkos::fence();
+  }
 
   Kokkos::Timer timer;
   for (unsigned i = 0; i < num_pingpongs; ++i) {
