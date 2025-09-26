@@ -20,5 +20,5 @@
 void print_language() {
   std::cout << "Hello From CUDA library\n";
   Kokkos::DefaultExecutionSpace().print_configuration(std::cout);
-  std::cout << "Goodbye from CUDA library" << std::endl;
+  std::cout << "Goodbye from CUDA library\n";
 }

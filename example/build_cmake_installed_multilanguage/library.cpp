@@ -19,6 +19,6 @@
 #include <iostream>
 void print_cxx() {
   std::cout << "Hello From C++ library\n";
-  Kokkos::DefaultExecutionSpace().print_configuration(std::cout);
-  std::cout << "Goodbye from C++ library" << std::endl;
+  Kokkos::DefaultHostExecutionSpace().print_configuration(std::cout);
+  std::cout << "Goodbye from C++ library\n";
 }
