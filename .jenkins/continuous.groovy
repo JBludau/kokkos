@@ -128,8 +128,20 @@ pipeline {
                                 -DKokkos_ENABLE_TESTS=ON \
                                 -DKokkos_ENABLE_BENCHMARKS=ON \
                                 -DKokkos_ENABLE_HIP=ON \
+                                -DKokkos_ENABLE_MULTIPLE_CMAKE_LANGUAGES=ON \
+                                -DCMAKE_INSTALL_PREFIX=${PWD}/../install \
                               .. && \
-                              make -j16 && ctest --no-compress-output -T Test --verbose'''
+                              make -j16 install && ctest --no-compress-output -T Test --verbose && \
+                              cd .. && \
+                              export CMAKE_PREFIX_PATH=${PWD}/install && \
+                              cd example/build_cmake_installed_multilanguage && \
+                              rm -rf build && mkdir -p build && cd build && \
+                              cmake \
+                                -DCMAKE_CXX_COMPILER=hipcc \
+                                -DCMAKE_CXX_FLAGS=-Werror \
+                                -DCMAKE_CXX_STANDARD=20 \
+                              .. && \
+                              make -j8 && ctest --verbose'''
                     }
                     post {
                         always {
