@@ -1,5 +1,5 @@
 # Kokkos minimally requires 3.25.2 for cuda language
-cmake_minimum_required(VERSION 3.25.2)
+cmake_minimum_required(VERSION 3.22)
 
 # Projects can safely mix languages - must have C++ support
 # Kokkos flags will only apply to C++ files
