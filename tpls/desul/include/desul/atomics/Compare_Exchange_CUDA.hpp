@@ -141,7 +141,7 @@ __device__ std::enable_if_t<sizeof(T) == 4 || sizeof(T) == 8, T> device_atomic_e
 namespace desul {
 namespace Impl {
 
-#ifdef DESUL_HAVE_CUDA_128BIT_CAS
+#ifdef DESUL_HAVE_16BYTE_COMPARE_AND_SWAP
 template <class T, class MemoryScope>
 __device__ std::enable_if_t<sizeof(T) == 16, T> device_atomic_exchange(
     T* const dest, T value, MemoryOrderSeqCst, MemoryScope) {
@@ -206,7 +206,7 @@ __device__ std::enable_if_t<sizeof(T) == 8, T> device_atomic_compare_exchange(
 
 template <class T, class MemoryOrder, class MemoryScope>
 __device__ std::enable_if_t<(sizeof(T) != 8) && (sizeof(T) != 4)
-#ifdef DESUL_HAVE_CUDA_128BIT_CAS
+#ifdef DESUL_HAVE_16BYTE_COMPARE_AND_SWAP
                                 && (sizeof(T) != 16)
 #endif
                                 ,
@@ -241,7 +241,7 @@ device_atomic_compare_exchange(
 
 template <class T, class MemoryOrder, class MemoryScope>
 __device__ std::enable_if_t<(sizeof(T) != 8) && (sizeof(T) != 4)
-#ifdef DESUL_HAVE_CUDA_128BIT_CAS
+#ifdef DESUL_HAVE_16BYTE_COMPARE_AND_SWAP
                                 && (sizeof(T) != 16)
 #endif
                                 ,
