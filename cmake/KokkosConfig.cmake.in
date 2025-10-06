@@ -69,14 +69,14 @@ elseif(@Kokkos_ENABLE_CUDA@ AND (NOT @KOKKOS_COMPILE_LANGUAGE@ STREQUAL CUDA OR 
   unset(IS_NVCC)
 endif()
 
-if(@Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE@ OR @Kokkos_ENABLE_MULTIPLE_CMAKE_LANGUAGES@)
-  if((@Kokkos_ENABLE_CUDA@ AND NOT (${CMAKE_CUDA_ARCHITECTURES} STREQUAL ${Kokkos_CUDA_ARCHITECTURES}))
-     OR (@Kokkos_ENABLE_HIP@ AND NOT (${CMAKE_HIP_ARCHITECTURES} STREQUAL ${Kokkos_HIP_ARCHITECTURES}))
-  )
-    message(
-      WARNING
-        "Kokkos enabled the architecture '${Kokkos_@KOKKOS_COMPILE_LANGUAGE@_ARCHITECTURES}' which is not the same as the architectures enabled in CMake '${CMAKE_@KOKKOS_COMPILE_LANGUAGE@_ARCHITECTURES}' which can lead to problems when Kokkos and @KOKKOS_COMPILE_LANGUAGE@ code is mixed."
-    )
+if(CMAKE_@KOKKOS_COMPILE_LANGUAGE@_COMPILER)
+  if(@Kokkos_ENABLE_@KOKKOS_COMPILE_LANGUAGE@@ AND CMAKE_@KOKKOS_COMPILE_LANGUAGE@_ARCHITECTURES)
+    if(NOT (${CMAKE_@KOKKOS_COMPILE_LANGUAGE@_ARCHITECTURES} STREQUAL ${Kokkos_@KOKKOS_COMPILE_LANGUAGE@_ARCHITECTURES}))
+      message(
+        WARNING
+          "Kokkos enabled the architecture '${Kokkos_@KOKKOS_COMPILE_LANGUAGE@_ARCHITECTURES}' which is not the same as the architectures enabled in CMake '${CMAKE_@KOKKOS_COMPILE_LANGUAGE@_ARCHITECTURES}' which can lead to problems when Kokkos and @KOKKOS_COMPILE_LANGUAGE@ code is mixed."
+      )
+    endif()
   endif()
 endif()
 
