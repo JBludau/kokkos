@@ -289,7 +289,8 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
     IndexType stride     = std::stoi(argv[6]);
 
     std::ofstream outfile;
-    outfile.open(mode + "_" + argv[3] + "_" + argv[4] + "_" + argv[5] + ".csv",
+    outfile.open(mode + "_" + argv[3] + "_" + argv[4] + "_" + argv[5] + "_" +
+                     argv[6] + ".csv",
                  std::ios::out);
 
     Kokkos::print_configuration(outfile);
