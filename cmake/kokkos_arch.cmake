@@ -276,43 +276,51 @@ endif()
 
 #------------------------------- KOKKOS NEON and SVE detection ---------------------------
 function(kokkos_use_neon_if_compiler_allows_it)
-    unset(KOKKOS_COMPILER_HAS_ARM_NEON CACHE)
-    check_source_compiles(CXX "
+  unset(KOKKOS_COMPILER_HAS_ARM_NEON CACHE)
+  check_source_compiles(
+    CXX
+    "
     #include <arm_neon.h>
     int main() {
         float32x2_t a;
         a = vadd_f32(a, a);
     }
-    " KOKKOS_COMPILER_HAS_ARM_NEON)
+    "
+    KOKKOS_COMPILER_HAS_ARM_NEON
+  )
 
-    #FIXME_Kokkos_launch_compiler
-    get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
-    if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
-      message(WARNING "The use of 'kokkos_launch_compiler' prevents reliable NEON detection. Disabling NEON.")
-      set(KOKKOS_COMPILER_HAS_ARM_NEON OFF)
-    endif()
+  #FIXME_Kokkos_launch_compiler
+  get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
+  if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
+    message(WARNING "The use of 'kokkos_launch_compiler' prevents reliable NEON detection. Disabling NEON.")
+    set(KOKKOS_COMPILER_HAS_ARM_NEON OFF)
+  endif()
 
-    set(KOKKOS_ARCH_ARM_NEON ${KOKKOS_COMPILER_HAS_ARM_NEON} PARENT_SCOPE)
+  set(KOKKOS_ARCH_ARM_NEON ${KOKKOS_COMPILER_HAS_ARM_NEON} PARENT_SCOPE)
 endfunction()
 
 function(kokkos_use_sve_if_compiler_allows_it)
-    unset(KOKKOS_COMPILER_HAS_ARM_SVE CACHE)
-    check_source_compiles(CXX "
+  unset(KOKKOS_COMPILER_HAS_ARM_SVE CACHE)
+  check_source_compiles(
+    CXX
+    "
     #include <arm_sve.h>
     int main() {
     auto a = svcntb();
     return 0;
     }
-    " KOKKOS_COMPILER_HAS_ARM_SVE)
+    "
+    KOKKOS_COMPILER_HAS_ARM_SVE
+  )
 
-    #FIXME_Kokkos_launch_compiler
-    get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
-    if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
-      message(WARNING "The use of 'kokkos_launch_compiler' prevents reliable SVE detection. Disabling SVE.")
-      set(KOKKOS_COMPILER_HAS_ARM_SVE OFF)
-    endif()
+  #FIXME_Kokkos_launch_compiler
+  get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
+  if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
+    message(WARNING "The use of 'kokkos_launch_compiler' prevents reliable SVE detection. Disabling SVE.")
+    set(KOKKOS_COMPILER_HAS_ARM_SVE OFF)
+  endif()
 
-    set(KOKKOS_ARCH_ARM_SVE ${KOKKOS_COMPILER_HAS_ARM_SVE} PARENT_SCOPE)
+  set(KOKKOS_ARCH_ARM_SVE ${KOKKOS_COMPILER_HAS_ARM_SVE} PARENT_SCOPE)
 endfunction()
 
 if(KOKKOS_ARCH_ARMV80)
@@ -478,7 +486,11 @@ if(KOKKOS_ARCH_ARMV9_GRACE)
     check_cxx_compiler_flag("-msve-vector-bits=128" COMPILER_SUPPORTS_SVE_VECTOR_BITS)
   endif()
   kokkos_use_sve_if_compiler_allows_it()
-  if(KOKKOS_ARCH_ARM_SVE AND COMPILER_SUPPORTS_NEOVERSE_V2 AND COMPILER_SUPPORTS_SVE_VECTOR_BITS OR COMPILER_SUPPORTS_GRACE_AS_TARGET_PROCESSOR)
+  if(KOKKOS_ARCH_ARM_SVE
+     AND COMPILER_SUPPORTS_NEOVERSE_V2
+     AND COMPILER_SUPPORTS_SVE_VECTOR_BITS
+     OR COMPILER_SUPPORTS_GRACE_AS_TARGET_PROCESSOR
+  )
     compiler_specific_flags(
       COMPILER_ID
       KOKKOS_CXX_HOST_COMPILER_ID
@@ -852,7 +864,6 @@ endif()
 if(KOKKOS_CXX_HOST_COMPILER_ID STREQUAL NVHPC)
   set(KOKKOS_ARCH_AVX512XEON OFF)
 endif()
-
 
 if(NOT KOKKOS_COMPILE_LANGUAGE STREQUAL CUDA)
   if(KOKKOS_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE)
