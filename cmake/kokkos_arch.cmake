@@ -27,6 +27,7 @@ kokkos_check_deprecated_options(
 set(KOKKOS_ARCH_LIST)
 
 include(CheckCXXCompilerFlag)
+include(CheckSourceCompiles)
 
 kokkos_deprecated_list(ARCH ARCH)
 
@@ -272,6 +273,47 @@ if(KOKKOS_ARCH_NATIVE)
 
   compiler_specific_flags(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID DEFAULT ${KOKKOS_NATIVE_FLAGS})
 endif()
+
+#------------------------------- KOKKOS NEON and SVE detection ---------------------------
+function(kokkos_use_neon_if_compiler_allows_it)
+    unset(KOKKOS_COMPILER_HAS_ARM_NEON CACHE)
+    check_source_compiles(CXX "
+    #include <arm_neon.h>
+    int main() {
+        float32x2_t a;
+        a = vadd_f32(a, a);
+    }
+    " KOKKOS_COMPILER_HAS_ARM_NEON)
+
+    #FIXME_Kokkos_launch_compiler
+    get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
+    if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
+      message(WARNING "The use of 'kokkos_launch_compiler' prevents reliable NEON detection. Disabling NEON.")
+      set(KOKKOS_COMPILER_HAS_ARM_NEON OFF)
+    endif()
+
+    set(KOKKOS_ARCH_ARM_NEON ${KOKKOS_COMPILER_HAS_ARM_NEON} PARENT_SCOPE)
+endfunction()
+
+function(kokkos_use_sve_if_compiler_allows_it)
+    unset(KOKKOS_COMPILER_HAS_ARM_SVE CACHE)
+    check_source_compiles(CXX "
+    #include <arm_sve.h>
+    int main() {
+    auto a = svcntb();
+    return 0;
+    }
+    " KOKKOS_COMPILER_HAS_ARM_SVE)
+
+    #FIXME_Kokkos_launch_compiler
+    get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
+    if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
+      message(WARNING "The use of 'kokkos_launch_compiler' prevents reliable SVE detection. Disabling SVE.")
+      set(KOKKOS_COMPILER_HAS_ARM_SVE OFF)
+    endif()
+
+    set(KOKKOS_ARCH_ARM_SVE ${KOKKOS_COMPILER_HAS_ARM_SVE} PARENT_SCOPE)
+endfunction()
 
 if(KOKKOS_ARCH_ARMV80)
   set(KOKKOS_ARCH_ARM_NEON ON)
