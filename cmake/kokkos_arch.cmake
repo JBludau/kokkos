@@ -316,7 +316,7 @@ function(kokkos_use_sve_if_compiler_allows_it)
 endfunction()
 
 if(KOKKOS_ARCH_ARMV80)
-  set(KOKKOS_ARCH_ARM_NEON ON)
+  kokkos_use_neon_if_compiler_allows_it()
   compiler_specific_flags(
     COMPILER_ID
     KOKKOS_CXX_HOST_COMPILER_ID
@@ -332,7 +332,7 @@ if(KOKKOS_ARCH_ARMV80)
 endif()
 
 if(KOKKOS_ARCH_ARMV81)
-  set(KOKKOS_ARCH_ARM_NEON ON)
+  kokkos_use_neon_if_compiler_allows_it()
   compiler_specific_flags(
     COMPILER_ID
     KOKKOS_CXX_HOST_COMPILER_ID
@@ -348,7 +348,7 @@ if(KOKKOS_ARCH_ARMV81)
 endif()
 
 if(KOKKOS_ARCH_ARMV8_THUNDERX)
-  set(KOKKOS_ARCH_ARM_NEON ON)
+  kokkos_use_neon_if_compiler_allows_it()
   set(KOKKOS_ARCH_ARMV80 ON) #Not a cache variable
   compiler_specific_flags(
     COMPILER_ID
@@ -366,7 +366,7 @@ if(KOKKOS_ARCH_ARMV8_THUNDERX)
 endif()
 
 if(KOKKOS_ARCH_ARMV84)
-  set(KOKKOS_ARCH_ARM_NEON ON)
+  kokkos_use_neon_if_compiler_allows_it()
   compiler_specific_flags(
     COMPILER_ID
     KOKKOS_CXX_HOST_COMPILER_ID
@@ -382,7 +382,7 @@ if(KOKKOS_ARCH_ARMV84)
 endif()
 
 if(KOKKOS_ARCH_ARMV8_THUNDERX2)
-  set(KOKKOS_ARCH_ARM_NEON ON)
+  kokkos_use_neon_if_compiler_allows_it()
   set(KOKKOS_ARCH_ARMV81 ON) #Not a cache variable
   compiler_specific_flags(
     COMPILER_ID
@@ -435,12 +435,12 @@ function(GET_SVE_HW_VL FLAG)
 endfunction()
 
 if(KOKKOS_ARCH_ARMV84_SVE)
-  set(KOKKOS_ARCH_ARM_NEON ON)
+  kokkos_use_neon_if_compiler_allows_it()
   set(KOKKOS_ARCH_ARMV84_SVE_FLAG -march=armv8.4-a+sve)
   check_cxx_compiler_flag(${KOKKOS_ARCH_ARMV84_SVE_FLAG} COMPILER_SUPPORTS_ARMV84_SVE)
 
   if(COMPILER_SUPPORTS_ARMV84_SVE)
-    set(KOKKOS_ARCH_ARM_SVE ON)
+    kokkos_use_sve_if_compiler_allows_it()
     get_sve_hw_vl(${KOKKOS_ARCH_ARMV84_SVE_FLAG})
     set(KOKKOS_ARCH_ARMV84_SVE_FLAG ${KOKKOS_ARCH_ARMV84_SVE_FLAG};-msve-vector-bits=${SVE_HW_VL})
     compiler_specific_flags(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID DEFAULT ${KOKKOS_ARCH_ARMV84_SVE_FLAG})
@@ -450,7 +450,7 @@ if(KOKKOS_ARCH_ARMV84_SVE)
 endif()
 
 if(KOKKOS_ARCH_A64FX)
-  set(KOKKOS_ARCH_ARM_NEON ON)
+  kokkos_use_neon_if_compiler_allows_it()
   compiler_specific_flags(
     COMPILER_ID
     KOKKOS_CXX_HOST_COMPILER_ID
@@ -470,15 +470,15 @@ if(KOKKOS_ARCH_A64FX)
 endif()
 
 if(KOKKOS_ARCH_ARMV9_GRACE)
-  set(KOKKOS_ARCH_ARM_NEON ON)
+  kokkos_use_neon_if_compiler_allows_it()
   if(KOKKOS_CXX_HOST_COMPILER_ID STREQUAL NVHPC)
     check_cxx_compiler_flag("-tp=grace" COMPILER_SUPPORTS_GRACE_AS_TARGET_PROCESSOR)
   else()
     check_cxx_compiler_flag("-mcpu=neoverse-v2" COMPILER_SUPPORTS_NEOVERSE_V2)
     check_cxx_compiler_flag("-msve-vector-bits=128" COMPILER_SUPPORTS_SVE_VECTOR_BITS)
   endif()
-  if(COMPILER_SUPPORTS_NEOVERSE_V2 AND COMPILER_SUPPORTS_SVE_VECTOR_BITS OR COMPILER_SUPPORTS_GRACE_AS_TARGET_PROCESSOR)
-    set(KOKKOS_ARCH_ARM_SVE ON)
+  kokkos_use_sve_if_compiler_allows_it()
+  if(KOKKOS_ARCH_ARM_SVE AND COMPILER_SUPPORTS_NEOVERSE_V2 AND COMPILER_SUPPORTS_SVE_VECTOR_BITS OR COMPILER_SUPPORTS_GRACE_AS_TARGET_PROCESSOR)
     compiler_specific_flags(
       COMPILER_ID
       KOKKOS_CXX_HOST_COMPILER_ID
@@ -802,10 +802,8 @@ if(KOKKOS_ARCH_NATIVE)
     check_cxx_symbol_exists(__AVX512F__ "" KOKKOS_COMPILER_HAS_AVX512)
     unset(KOKKOS_COMPILER_HAS_AVX2 CACHE)
     check_cxx_symbol_exists(__AVX2__ "" KOKKOS_COMPILER_HAS_AVX2)
-    unset(KOKKOS_COMPILER_HAS_ARM_SVE CACHE)
-    check_cxx_symbol_exists(__ARM_FEATURE_SVE "" KOKKOS_COMPILER_HAS_ARM_SVE)
-    unset(KOKKOS_COMPILER_HAS_ARM_NEON CACHE)
-    check_cxx_symbol_exists(__ARM_NEON "" KOKKOS_COMPILER_HAS_ARM_NEON)
+    kokkos_use_sve_if_compiler_allows_it()
+    kokkos_use_neon_if_compiler_allows_it()
     unset(KOKKOS_COMPILER_HAS_AVX CACHE)
     check_cxx_symbol_exists(__AVX__ "" KOKKOS_COMPILER_HAS_AVX)
 
@@ -855,10 +853,6 @@ if(KOKKOS_CXX_HOST_COMPILER_ID STREQUAL NVHPC)
   set(KOKKOS_ARCH_AVX512XEON OFF)
 endif()
 
-# FIXME_NVCC nvcc doesn't seem to support Arm Neon.
-if(KOKKOS_ARCH_ARM_NEON AND KOKKOS_CXX_COMPILER_ID STREQUAL NVIDIA)
-  unset(KOKKOS_ARCH_ARM_NEON)
-endif()
 
 if(NOT KOKKOS_COMPILE_LANGUAGE STREQUAL CUDA)
   if(KOKKOS_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE)
