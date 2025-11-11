@@ -276,6 +276,15 @@ endif()
 
 #------------------------------- KOKKOS NEON and SVE detection ---------------------------
 function(kokkos_use_neon_if_compiler_allows_it)
+  cmake_parse_arguments(ARG "" "" "COMPILER_FLAGS" ${ARGN})
+  if(ARG_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "'kokkos_use_neon_if_compiler_allows_it' has unrecognized arguments: ${ARG_UNPARSED_ARGUMENTS}")
+  endif()
+
+  if (ARG_COMPILER_FLAGS)
+    set(CMAKE_REQUIRED_FLAGS ${ARG_COMPILER_FLAGS})
+  endif()
+
   unset(KOKKOS_COMPILER_HAS_ARM_NEON CACHE)
   check_source_compiles(
     ${KOKKOS_COMPILE_LANGUAGE}
@@ -300,6 +309,15 @@ function(kokkos_use_neon_if_compiler_allows_it)
 endfunction()
 
 function(kokkos_use_sve_if_compiler_allows_it)
+  cmake_parse_arguments(ARG "" "" "COMPILER_FLAGS" ${ARGN})
+  if(ARG_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "'kokkos_use_sve_if_compiler_allows_it' has unrecognized arguments: ${ARG_UNPARSED_ARGUMENTS}")
+  endif()
+
+  if (ARG_COMPILER_FLAGS)
+    set(CMAKE_REQUIRED_FLAGS ${ARG_COMPILER_FLAGS})
+  endif()
+
   unset(KOKKOS_COMPILER_HAS_ARM_SVE CACHE)
   check_source_compiles(
     ${KOKKOS_COMPILE_LANGUAGE}
