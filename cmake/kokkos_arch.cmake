@@ -278,7 +278,7 @@ endif()
 function(kokkos_use_neon_if_compiler_allows_it)
   unset(KOKKOS_COMPILER_HAS_ARM_NEON CACHE)
   check_source_compiles(
-    CXX
+    ${KOKKOS_COMPILE_LANGUAGE}
     "
     #include <arm_neon.h>
     int main() {
@@ -302,7 +302,7 @@ endfunction()
 function(kokkos_use_sve_if_compiler_allows_it)
   unset(KOKKOS_COMPILER_HAS_ARM_SVE CACHE)
   check_source_compiles(
-    CXX
+    ${KOKKOS_COMPILE_LANGUAGE}
     "
     #include <arm_sve.h>
     int main() {
