@@ -509,7 +509,6 @@ Alternatively, try configuring with -DKokkos_ARCH_NATIVE=ON to use the native ar
 endif()
 
 if(KOKKOS_ARCH_ARMV9_GRACE)
-  kokkos_use_neon_if_compiler_allows_it()
   if(KOKKOS_CXX_HOST_COMPILER_ID STREQUAL NVHPC)
     check_cxx_compiler_flag("-tp=grace" COMPILER_SUPPORTS_GRACE_AS_TARGET_PROCESSOR)
   else()
