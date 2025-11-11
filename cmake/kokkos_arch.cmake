@@ -281,7 +281,7 @@ function(kokkos_use_neon_if_compiler_allows_it)
     message(FATAL_ERROR "'kokkos_use_neon_if_compiler_allows_it' has unrecognized arguments: ${ARG_UNPARSED_ARGUMENTS}")
   endif()
 
-  if (ARG_COMPILER_FLAGS)
+  if(ARG_COMPILER_FLAGS)
     set(CMAKE_REQUIRED_FLAGS ${ARG_COMPILER_FLAGS})
   endif()
 
@@ -314,7 +314,7 @@ function(kokkos_use_sve_if_compiler_allows_it)
     message(FATAL_ERROR "'kokkos_use_sve_if_compiler_allows_it' has unrecognized arguments: ${ARG_UNPARSED_ARGUMENTS}")
   endif()
 
-  if (ARG_COMPILER_FLAGS)
+  if(ARG_COMPILER_FLAGS)
     set(CMAKE_REQUIRED_FLAGS ${ARG_COMPILER_FLAGS})
   endif()
 
@@ -476,23 +476,36 @@ if(KOKKOS_ARCH_ARMV84_SVE)
 endif()
 
 if(KOKKOS_ARCH_A64FX)
-  kokkos_use_neon_if_compiler_allows_it()
-  compiler_specific_flags(
-    COMPILER_ID
-    KOKKOS_CXX_HOST_COMPILER_ID
-    Clang
-    -march=armv8.2-a+sve
-    -msve-vector-bits=512
-    GNU
-    -march=armv8.2-a+sve
-    -msve-vector-bits=512
-    MSVC
-    NO-VALUE-SPECIFIED
-    NVHPC
-    NO-VALUE-SPECIFIED
-    DEFAULT
-    -march=armv8.2-a+sve
-  )
+  if(KOKKOS_CXX_HOST_COMPILER_ID STREQUAL NVHPC OR KOKKOS_CXX_HOST_COMPILER_ID STREQUAL MSVC)
+    kokkos_use_neon_if_compiler_allows_it()
+    kokkos_use_sve_if_compiler_allows_it()
+  else()
+    kokkos_use_neon_if_compiler_allows_it(COMPILER_FLAGS "-march=armv8.2-a+sve")
+    kokkos_use_sve_if_compiler_allows_it(COMPILER_FLAGS "-march=armv8.2-a+sve")
+  endif()
+  if(KOKKOS_ARCH_ARM_SVE AND KOKKOS_ARCH_ARM_NEON)
+    compiler_specific_flags(
+      COMPILER_ID
+      KOKKOS_CXX_HOST_COMPILER_ID
+      Clang
+      -march=armv8.2-a+sve
+      -msve-vector-bits=512
+      GNU
+      -march=armv8.2-a+sve
+      -msve-vector-bits=512
+      MSVC
+      NO-VALUE-SPECIFIED
+      NVHPC
+      NO-VALUE-SPECIFIED
+      DEFAULT
+      -march=armv8.2-a+sve
+    )
+  else()
+    message(SEND_ERROR "Your compiler does not appear to support the A64FX architecture.
+Please ensure you are using a compatible compiler and toolchain.
+Alternatively, try configuring with -DKokkos_ARCH_NATIVE=ON to use the native architecture of your system."
+    )
+  endif()
 endif()
 
 if(KOKKOS_ARCH_ARMV9_GRACE)
