@@ -342,7 +342,7 @@ function(kokkos_use_sve_if_compiler_allows_it)
 endfunction()
 
 if(KOKKOS_ARCH_ARMV80)
-  kokkos_use_neon_if_compiler_allows_it()
+  set(KOKKOS_ARCH_ARM_NEON ON)
   compiler_specific_flags(
     COMPILER_ID
     KOKKOS_CXX_HOST_COMPILER_ID
@@ -358,7 +358,7 @@ if(KOKKOS_ARCH_ARMV80)
 endif()
 
 if(KOKKOS_ARCH_ARMV81)
-  kokkos_use_neon_if_compiler_allows_it()
+  set(KOKKOS_ARCH_ARM_NEON ON)
   compiler_specific_flags(
     COMPILER_ID
     KOKKOS_CXX_HOST_COMPILER_ID
@@ -374,7 +374,7 @@ if(KOKKOS_ARCH_ARMV81)
 endif()
 
 if(KOKKOS_ARCH_ARMV8_THUNDERX)
-  kokkos_use_neon_if_compiler_allows_it()
+  set(KOKKOS_ARCH_ARM_NEON ON)
   set(KOKKOS_ARCH_ARMV80 ON) #Not a cache variable
   compiler_specific_flags(
     COMPILER_ID
@@ -392,7 +392,7 @@ if(KOKKOS_ARCH_ARMV8_THUNDERX)
 endif()
 
 if(KOKKOS_ARCH_ARMV84)
-  kokkos_use_neon_if_compiler_allows_it()
+  set(KOKKOS_ARCH_ARM_NEON ON)
   compiler_specific_flags(
     COMPILER_ID
     KOKKOS_CXX_HOST_COMPILER_ID
@@ -408,7 +408,7 @@ if(KOKKOS_ARCH_ARMV84)
 endif()
 
 if(KOKKOS_ARCH_ARMV8_THUNDERX2)
-  kokkos_use_neon_if_compiler_allows_it()
+  set(KOKKOS_ARCH_ARM_NEON ON)
   set(KOKKOS_ARCH_ARMV81 ON) #Not a cache variable
   compiler_specific_flags(
     COMPILER_ID
@@ -461,12 +461,12 @@ function(GET_SVE_HW_VL FLAG)
 endfunction()
 
 if(KOKKOS_ARCH_ARMV84_SVE)
-  kokkos_use_neon_if_compiler_allows_it()
+  set(KOKKOS_ARCH_ARM_NEON ON)
   set(KOKKOS_ARCH_ARMV84_SVE_FLAG -march=armv8.4-a+sve)
   check_cxx_compiler_flag(${KOKKOS_ARCH_ARMV84_SVE_FLAG} COMPILER_SUPPORTS_ARMV84_SVE)
 
   if(COMPILER_SUPPORTS_ARMV84_SVE)
-    kokkos_use_sve_if_compiler_allows_it()
+    set(KOKKOS_ARCH_ARM_SVE ON)
     get_sve_hw_vl(${KOKKOS_ARCH_ARMV84_SVE_FLAG})
     set(KOKKOS_ARCH_ARMV84_SVE_FLAG ${KOKKOS_ARCH_ARMV84_SVE_FLAG};-msve-vector-bits=${SVE_HW_VL})
     compiler_specific_flags(COMPILER_ID KOKKOS_CXX_HOST_COMPILER_ID DEFAULT ${KOKKOS_ARCH_ARMV84_SVE_FLAG})
@@ -476,49 +476,35 @@ if(KOKKOS_ARCH_ARMV84_SVE)
 endif()
 
 if(KOKKOS_ARCH_A64FX)
-  if(KOKKOS_CXX_HOST_COMPILER_ID STREQUAL NVHPC OR KOKKOS_CXX_HOST_COMPILER_ID STREQUAL MSVC)
-    kokkos_use_neon_if_compiler_allows_it()
-    kokkos_use_sve_if_compiler_allows_it()
-  else()
-    kokkos_use_neon_if_compiler_allows_it(COMPILER_FLAGS "-march=armv8.2-a+sve")
-    kokkos_use_sve_if_compiler_allows_it(COMPILER_FLAGS "-march=armv8.2-a+sve")
-  endif()
-  if(KOKKOS_ARCH_ARM_SVE AND KOKKOS_ARCH_ARM_NEON)
-    compiler_specific_flags(
-      COMPILER_ID
-      KOKKOS_CXX_HOST_COMPILER_ID
-      Clang
-      -march=armv8.2-a+sve
-      -msve-vector-bits=512
-      GNU
-      -march=armv8.2-a+sve
-      -msve-vector-bits=512
-      MSVC
-      NO-VALUE-SPECIFIED
-      NVHPC
-      NO-VALUE-SPECIFIED
-      DEFAULT
-      -march=armv8.2-a+sve
-    )
-  else()
-    message(SEND_ERROR "Your compiler does not appear to support the A64FX architecture.
-Please ensure you are using a compatible compiler and toolchain.
-Alternatively, try configuring with -DKokkos_ARCH_NATIVE=ON to use the native architecture of your system."
-    )
-  endif()
+  set(KOKKOS_ARCH_ARM_NEON ON)
+  compiler_specific_flags(
+    COMPILER_ID
+    KOKKOS_CXX_HOST_COMPILER_ID
+    Clang
+    -march=armv8.2-a+sve
+    -msve-vector-bits=512
+    GNU
+    -march=armv8.2-a+sve
+    -msve-vector-bits=512
+    MSVC
+    NO-VALUE-SPECIFIED
+    NVHPC
+    NO-VALUE-SPECIFIED
+    DEFAULT
+    -march=armv8.2-a+sve
+  )
 endif()
 
 if(KOKKOS_ARCH_ARMV9_GRACE)
+  set(KOKKOS_ARCH_ARM_NEON ON)
   if(KOKKOS_CXX_HOST_COMPILER_ID STREQUAL NVHPC)
     check_cxx_compiler_flag("-tp=grace" COMPILER_SUPPORTS_GRACE_AS_TARGET_PROCESSOR)
   else()
     check_cxx_compiler_flag("-mcpu=neoverse-v2" COMPILER_SUPPORTS_NEOVERSE_V2)
     check_cxx_compiler_flag("-msve-vector-bits=128" COMPILER_SUPPORTS_SVE_VECTOR_BITS)
   endif()
-  kokkos_use_sve_if_compiler_allows_it()
-  if(KOKKOS_ARCH_ARM_SVE AND (COMPILER_SUPPORTS_NEOVERSE_V2 AND COMPILER_SUPPORTS_SVE_VECTOR_BITS
-                              OR COMPILER_SUPPORTS_GRACE_AS_TARGET_PROCESSOR)
-  )
+  if(COMPILER_SUPPORTS_NEOVERSE_V2 AND COMPILER_SUPPORTS_SVE_VECTOR_BITS OR COMPILER_SUPPORTS_GRACE_AS_TARGET_PROCESSOR)
+    set(KOKKOS_ARCH_ARM_SVE ON)
     compiler_specific_flags(
       COMPILER_ID
       KOKKOS_CXX_HOST_COMPILER_ID
