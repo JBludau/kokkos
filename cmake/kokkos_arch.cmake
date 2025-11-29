@@ -337,7 +337,10 @@ function(kokkos_use_sve_if_compiler_allows_it)
   #FIXME_Kokkos_launch_compiler
   get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
   if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
-    message(WARNING "The use of 'kokkos_launch_compiler' prevents reliable SVE detection. Disabling SVE.")
+    message(WARNING "The use of 'kokkos_launch_compiler' prevents reliable SVE detection. Disabling SVE.\n"
+                    "You can force the use of SVE by using the Kokkos_ARCH_* flag specific to your target "
+                    "processor instead of Kokkos_ARCH_NATIVE."
+    )
     set(KOKKOS_COMPILER_HAS_ARM_SVE OFF)
   endif()
 
