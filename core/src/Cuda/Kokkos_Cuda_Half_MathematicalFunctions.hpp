@@ -72,8 +72,15 @@ KOKKOS_INLINE_FUNCTION Kokkos::Experimental::bhalf_t impl_test_fallback_bhalf(
   KOKKOS_CUDA_BHALF_UNARY_PREDICATE_IMPL(OP, CUDA_NAME)
 
 // Basic operations
+// FIXME_CLANG+CUDA: __habs ICEs clang 17 for special values with half_t
+#if defined KOKKOS_COMPILER_CLANG && KOKKOS_COMPILER_CLANG >= 1700 && \
+    KOKKOS_COMPILER_CLANG < 1800
+KOKKOS_CUDA_BHALF_UNARY_FUNCTION_IMPL(abs, __habs)
+KOKKOS_CUDA_BHALF_UNARY_FUNCTION_IMPL(fabs, __habs)
+#else
 KOKKOS_CUDA_HALF_AND_BHALF_UNARY_FUNCTION_IMPL(abs, __habs)
 KOKKOS_CUDA_HALF_AND_BHALF_UNARY_FUNCTION_IMPL(fabs, __habs)
+#endif
 // fmod
 // remainder
 #if KOKKOS_IMPL_ARCH_NVIDIA_GPU >= 80
