@@ -1673,12 +1673,32 @@ struct TestAbsoluteValueFunction {
       Kokkos::printf("failed abs(float)\n");
     }
     if (abs(static_cast<KE::half_t>(4.f)) != static_cast<KE::half_t>(4.f) ||
-        abs(static_cast<KE::half_t>(-4.f)) != static_cast<KE::half_t>(4.f)) {
+        abs(static_cast<KE::half_t>(-4.f)) != static_cast<KE::half_t>(4.f) ||
+        abs(KE::quiet_NaN<KE::half_t>::value) ==
+            abs(KE::quiet_NaN<KE::half_t>::value) ||
+        abs(KE::signaling_NaN<KE::half_t>::value) ==
+            abs(KE::signaling_NaN<KE::half_t>::value) ||
+        abs(KE::infinity<KE::half_t>::value) !=
+            abs(KE::infinity<KE::half_t>::value) ||
+        abs(KE::denorm_min<KE::half_t>::value) !=
+            abs(KE::denorm_min<KE::half_t>::value) ||
+        abs(KE::norm_min<KE::half_t>::value) !=
+            abs(KE::norm_min<KE::half_t>::value)) {
       ++e;
       Kokkos::printf("failed abs(KE::half_t)\n");
     }
     if (abs(static_cast<KE::bhalf_t>(4.f)) != static_cast<KE::bhalf_t>(4.f) ||
-        abs(static_cast<KE::bhalf_t>(-4.f)) != static_cast<KE::bhalf_t>(4.f)) {
+        abs(static_cast<KE::bhalf_t>(-4.f)) != static_cast<KE::bhalf_t>(4.f) ||
+        abs(KE::quiet_NaN<KE::bhalf_t>::value) ==
+            abs(KE::quiet_NaN<KE::bhalf_t>::value) ||
+        abs(KE::signaling_NaN<KE::bhalf_t>::value) ==
+            abs(KE::signaling_NaN<KE::bhalf_t>::value) ||
+        abs(KE::infinity<KE::bhalf_t>::value) !=
+            abs(KE::infinity<KE::bhalf_t>::value) ||
+        abs(KE::denorm_min<KE::bhalf_t>::value) !=
+            abs(KE::denorm_min<KE::bhalf_t>::value) ||
+        abs(KE::norm_min<KE::bhalf_t>::value) !=
+            abs(KE::norm_min<KE::bhalf_t>::value)) {
       ++e;
       Kokkos::printf("failed abs(KE::bhalf_t)\n");
     }
