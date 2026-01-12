@@ -337,6 +337,48 @@ function(kokkos_use_sve_if_compiler_allows_it)
   set(KOKKOS_ARCH_ARM_SVE ${KOKKOS_COMPILER_HAS_ARM_SVE} PARENT_SCOPE)
 endfunction()
 
+#------------------------------- KOKKOS 16byte lock free cas detection ---------------------------
+function(kokkos_check_16byte_lock_free_cas)
+  cmake_parse_arguments(ARG "" "" "COMPILER_FLAGS" ${ARGN})
+  if(ARG_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "'kokkos_check_16byte_lock_free_cas' has unrecognized arguments: ${ARG_UNPARSED_ARGUMENTS}")
+  endif()
+
+  if(ARG_COMPILER_FLAGS)
+    set(CMAKE_REQUIRED_FLAGS ${ARG_COMPILER_FLAGS})
+  endif()
+  unset(KOKKOS_COMPILATION_HAS_16BYTE_LOCK_FREE_ATOMICS_HOST CACHE)
+
+  #FIXME_Kokkos_launch_compiler
+  get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
+  if("${kokkos_global_rule_compile}" MATCHES "kokkos_launch_compiler")
+    message(WARNING "The use of 'kokkos_launch_compiler' prevents reliable NEON detection. Disabling NEON.\n"
+                    "You can force the use of NEON by using the Kokkos_ARCH_* flag specific to your target "
+                    "processor instead of Kokkos_ARCH_NATIVE."
+    )
+  else()
+    check_source_compiles(
+      ${KOKKOS_COMPILE_LANGUAGE}
+      "
+    #include <cstdint>
+    struct uint128_t
+    {
+      std::uint64_t lo;
+      std::uint64_t hi;
+    }
+    __attribute__ (( __aligned__( 16 ) ));
+
+    int main() {
+        uint128_t dest,compare,value;
+        __atomic_exchange(&dest, &compare, &value, __ATOMIC_RELAXED);
+        __atomic_compare_exchange(&dest,&compare,&value,false,__ATOMIC_RELAXED,__ATOMIC_RELAXED);
+    }
+    "
+      KOKKOS_COMPILATION_HAS_16BYTE_LOCK_FREE_ATOMICS_HOST
+    )
+  endif()
+endfunction()
+
 if(KOKKOS_ARCH_ARMV80)
   set(KOKKOS_ARCH_ARM_NEON ON)
   compiler_specific_flags(
