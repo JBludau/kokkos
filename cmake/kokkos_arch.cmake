@@ -910,6 +910,9 @@ if(KOKKOS_ARCH_NATIVE)
     message(STATUS "SIMD: AVX detected")
     set(KOKKOS_ARCH_AVX ON)
   endif()
+
+  #try to detect 16byte lock free host atomics
+  kokkos_check_16byte_lock_free_cas(COMPILER_FLAGS "${KOKKOS_NATIVE_FLAGS}")
 endif()
 
 # FIXME_NVHPC nvc++ doesn't seem to support AVX512.
