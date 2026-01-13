@@ -347,7 +347,7 @@ function(kokkos_check_16byte_lock_free_cas)
   if(ARG_COMPILER_FLAGS)
     set(CMAKE_REQUIRED_FLAGS ${ARG_COMPILER_FLAGS})
   endif()
-  unset(KOKKOS_COMPILATION_HAS_16BYTE_LOCK_FREE_ATOMICS_HOST CACHE)
+  unset(KOKKOS_ENABLE_IMPL_HOST_128BIT_LOCK_FREE_ATOMICS CACHE)
 
   #FIXME_Kokkos_launch_compiler
   get_property(kokkos_global_rule_compile GLOBAL PROPERTY RULE_LAUNCH_COMPILE)
@@ -374,7 +374,7 @@ function(kokkos_check_16byte_lock_free_cas)
         __atomic_compare_exchange(&dest,&compare,&value,false,__ATOMIC_RELAXED,__ATOMIC_RELAXED);
     }
     "
-      KOKKOS_COMPILATION_HAS_16BYTE_LOCK_FREE_ATOMICS_HOST
+      KOKKOS_ENABLE_IMPL_HOST_128BIT_LOCK_FREE_ATOMICS
     )
   endif()
 endfunction()
