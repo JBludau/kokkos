@@ -361,15 +361,14 @@ function(kokkos_check_16byte_lock_free_cas)
       ${KOKKOS_COMPILE_LANGUAGE}
       "
     #include <cstdint>
-    struct uint128_t
+    struct alignas(16) my_uint128_t
     {
       std::uint64_t lo;
       std::uint64_t hi;
-    }
-    __attribute__ (( __aligned__( 16 ) ));
+    };
 
     int main() {
-        uint128_t dest,compare,value;
+        my_uint128_t dest,compare,value;
         __atomic_exchange(&dest, &compare, &value, __ATOMIC_RELAXED);
         __atomic_compare_exchange(&dest,&compare,&value,false,__ATOMIC_RELAXED,__ATOMIC_RELAXED);
     }
