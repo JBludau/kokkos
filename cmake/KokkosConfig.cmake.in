@@ -92,11 +92,9 @@ else()
   if(NOT DEFINED CACHE{Kokkos_USE_LAUNCH_COMPILER})
     if(@Kokkos_ENABLE_CUDA@ AND (NOT @KOKKOS_COMPILE_LANGUAGE@ STREQUAL CUDA OR Kokkos_ENABLE_MULTIPLE_CMAKE_LANGUAGES))
       #
-      # if CUDA was enabled, the compilation language was not set to CUDA, and separable compilation was not
-      # specified, then set the RULE_LAUNCH_COMPILE and RULE_LAUNCH_LINK globally and
-      # kokkos_launch_compiler will re-direct to the compiler used to compile CUDA code during installation.
-      # kokkos_launch_compiler will re-direct if ${CMAKE_CXX_COMPILER} and -DKOKKOS_DEPENDENCE is present,
-      # otherwise, the original command will be executed
+      # This automatically enables the kokkos_launch_compiler script to swap the cxx compiler with nvcc.
+      # This is only relevant with the CUDA backend enabled while compiling in the CMake language CXX.
+      # Thus it is deactivated if Kokkos is compiled in the CMake language CUDA
       #
 
       # run test to see if CMAKE_CXX_COMPILER=nvcc_wrapper
