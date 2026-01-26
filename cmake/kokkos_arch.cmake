@@ -357,6 +357,10 @@ function(kokkos_check_16byte_lock_free_cas)
         "The use of 'kokkos_launch_compiler' prevents reliable 128bit lock free atomics detection on the host. Disabling 128bit lock free host atomics."
     )
   else()
+    # rationale is that if the following compiles and links without -latomic, the compiler uses lock free intrinsics for 128bit compare_exchange.
+    # make sure that latomic does not linger in the link options
+    set(CMAKE_REQUIRED_LIBRARIES "")
+    set(CMAKE_EXE_LINKER_FLAGS "")
     check_source_compiles(
       ${KOKKOS_COMPILE_LANGUAGE}
       "
