@@ -76,7 +76,7 @@ if(Kokkos_ENABLE_DEPRECATED_COMPONENTS)
   # new build strategy
 else()
   #message for old components deprecation
-  if("launch_compiler" IN_LIST Kokkos_FIND_COMPONENTS AND "separable_compilation" IN_LIST Kokkos_FIND_COMPONENTS)
+  if("launch_compiler" IN_LIST Kokkos_FIND_COMPONENTS OR "separable_compilation" IN_LIST Kokkos_FIND_COMPONENTS)
     message(
       FATAL_ERROR
         "Requesting 'separable_compilation' or 'launch_compiler' via COMPONENTS is deprecated. Use 'kokkos_set_launch_compiler' instead. To enable the deprecated COMPONENTS use 'Kokkos_ENABLE_DEPRECATED_COMPONENTS=ON'."
