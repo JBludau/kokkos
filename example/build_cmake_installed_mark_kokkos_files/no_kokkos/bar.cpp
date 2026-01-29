@@ -4,6 +4,6 @@
 #include <cstdio>
 
 int main() {
-  puts("hello world!");
+  std::puts("hello world!");
   return 0;
 }
