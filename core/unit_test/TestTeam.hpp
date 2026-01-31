@@ -972,8 +972,12 @@ struct ClassNoShmemSizeFunction {
 #else
     int team_size = 8;
 #endif
-    int const concurrency = ExecSpace().concurrency();
-    if (team_size > concurrency) team_size = concurrency;
+    int const max_team_size =
+        Kokkos::TeamPolicy<ExecSpace, ScheduleType>(1, 1).team_size_max(
+            KOKKOS_LAMBDA(
+                typename Kokkos::TeamPolicy<ExecSpace>::member_type){},
+            Kokkos::ParallelForTag{});
+    if (team_size > max_team_size) team_size = max_team_size;
     {
       Kokkos::TeamPolicy<TagFor, ExecSpace, ScheduleType> policy(10, team_size,
                                                                  16);
@@ -1046,8 +1050,12 @@ struct ClassWithShmemSizeFunction {
 
     int team_size = 8;
 
-    int const concurrency = ExecSpace().concurrency();
-    if (team_size > concurrency) team_size = concurrency;
+    int const max_team_size =
+        Kokkos::TeamPolicy<ExecSpace, ScheduleType>(1, 1).team_size_max(
+            KOKKOS_LAMBDA(
+                typename Kokkos::TeamPolicy<ExecSpace>::member_type){},
+            Kokkos::ParallelForTag{});
+    if (team_size > max_team_size) team_size = max_team_size;
 
     {
       Kokkos::TeamPolicy<TagFor, ExecSpace, ScheduleType> policy(10, team_size,
@@ -1120,8 +1128,11 @@ void test_team_mulit_level_scratch_test_lambda() {
 #else
   int team_size = 8;
 #endif
-  int const concurrency = ExecSpace().concurrency();
-  if (team_size > concurrency) team_size = concurrency;
+  int const max_team_size =
+      Kokkos::TeamPolicy<ExecSpace, ScheduleType>(1, 1).team_size_max(
+          KOKKOS_LAMBDA(typename Kokkos::TeamPolicy<ExecSpace>::member_type){},
+          Kokkos::ParallelForTag{});
+  if (team_size > max_team_size) team_size = max_team_size;
 
   Kokkos::TeamPolicy<ExecSpace, ScheduleType> policy(10, team_size, 16);
 

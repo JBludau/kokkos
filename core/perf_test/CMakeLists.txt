@@ -130,6 +130,8 @@ kokkos_add_benchmark(
   PerfTest_ViewFirstTouch_DeepCopy.cpp
 )
 
+kokkos_add_benchmark(PerformanceTest_MDRangePolicy_Stream SOURCES PerfTestMDRange_Stream.cpp)
+
 # FIXME_NVHPC
 if(NOT KOKKOS_CXX_COMPILER_ID STREQUAL NVHPC)
   kokkos_add_benchmark(PerformanceTest_Mempool SOURCES test_mempool.cpp)
