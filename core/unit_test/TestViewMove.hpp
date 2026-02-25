@@ -150,10 +150,8 @@ TEST(TEST_CATEGORY, view_moved_from) {
   Kokkos::View<double**, ExecutionSpace> v2("v2", 1, 2);
   // FIXME_HIP ROCm 7.1 on MI300 triggers an internal compiler error in the
   // CHECK macro
-#if !(                                                    \
-    defined(KOKKOS_ENABLE_HIP) &&                         \
-    (HIP_VERSION_MAJOR == 7 && HIP_VERSION_MINOR == 1) && \
-    (defined(KOKKOS_ARCH_AMD_GFX942) || defined(KOKKOS_ARCH_AMD_GFX942_APU)))
+#if !(defined(KOKKOS_ENABLE_HIP) && \
+      (HIP_VERSION_MAJOR == 7 && HIP_VERSION_MINOR == 1))
   test_moved_from_view(Kokkos::View<double**, ExecutionSpace>(
       v2.data(), v2.extent(0), v2.extent(1)));
 #endif
