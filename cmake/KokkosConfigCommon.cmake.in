@@ -31,14 +31,6 @@ endif()
 
 if(Kokkos_ENABLE_HIP)
   set(Kokkos_HIP_ARCHITECTURES @KOKKOS_HIP_ARCHITECTURES@)
-  #check if there were hip architectures set that are not what is enabled in Kokkos
-if(DEFINED CACHE{GPU_TARGETS})
-    if (NOT(GPU_TARGETS STREQUAL @KOKKOS_HIP_ARCHITECTURES@))
-      message(FATAL_ERROR "AMD GPU architecture given via GPU_TARGETS=${GPU_TARGETS} is not compatible with the architecture enabled in Kokkos which is @KOKKOS_HIP_ARCHITECTURES@. If there are multiple packages that call find_package(hip), try do put find_package(Kokkos) first")
-endif()
-else()
-  set(GPU_TARGETS @KOKKOS_HIP_ARCHITECTURES@ CACHE STRING "The target architecture for HIP" FORCE)
-endif()
 endif()
 
 if(NOT Kokkos_FIND_QUIETLY)

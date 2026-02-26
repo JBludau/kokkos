@@ -10,6 +10,17 @@ cmake_policy(SET CMP0057 NEW)
 #Find dependencies
 include(CMakeFindDependencyMacro)
 
+#We need to intercept the first find_package(hip) call we do ourselves to check if we are allowed to set the GPU_TARGETS
+if(Kokkos_ENABLE_HIP)
+if(DEFINED GPU_TARGETS)
+    if (NOT(GPU_TARGETS STREQUAL @KOKKOS_HIP_ARCHITECTURES@))
+      message(FATAL_ERROR "AMD GPU architecture given via GPU_TARGETS=${GPU_TARGETS} is not compatible with the architecture enabled in Kokkos which is @KOKKOS_HIP_ARCHITECTURES@. If there are multiple packages that call find_package(hip), try do put find_package(Kokkos) first")
+    endif()
+else()
+  set(GPU_TARGETS @KOKKOS_HIP_ARCHITECTURES@ CACHE STRING "The target architecture for HIP" FORCE)
+endif()
+endif()
+
 #This needs to go above the KokkosTargets in case
 #the Kokkos targets depend in some way on the TPL imports
 @KOKKOS_TPL_EXPORTS@
