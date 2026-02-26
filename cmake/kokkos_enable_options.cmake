@@ -108,7 +108,7 @@ kokkos_enable_option(
 if(KOKKOS_ENABLE_HIP)
   #We need to make sure we know if anyone or any other find_package(hip) call set GPU_TARGETS before our first call to find_package(hip).
   #This is because if it was undefined, we can safely overwrite it with our Kokkos_ARCH. If it was defined we should error out.
-  if(DEFINED CACHE{GPU_TARGETS})
+  if(DEFINED GPU_TARGETS)
     set(KOKKOS_IMPL_GPU_TARGETS_DETECTED ON CACHE BOOL "Something already created GPU_TARGETS before Kokkos did" FORCE)
   else()
     set(KOKKOS_IMPL_GPU_TARGETS_DETECTED OFF CACHE BOOL "Something already created GPU_TARGETS before Kokkos did" FORCE)
