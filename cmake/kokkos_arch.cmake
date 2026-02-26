@@ -1053,6 +1053,16 @@ function(CHECK_AMDGPU_ARCH ARCH FLAG)
       unset(KOKKOS_ARCH_${ARCH} PARENT_SCOPE)
     else()
       if(KOKKOS_ENABLE_HIP)
+        if(DEFINED CACHE{GPU_TARGETS} AND KOKKOS_IMPL_GPU_TARGETS_DETECTED)
+          if(NOT (GPU_TARGETS STREQUAL ${FLAG}))
+            message(
+              FATAL_ERROR
+                "AMD GPU architecture given via GPU_TARGETS=${GPU_TARGETS} is not compatible with the architecture enabled in Kokkos which is ${FLAG}. If there are multiple packages that call find_package(hip), try do put find_package(Kokkos) first"
+            )
+          endif()
+        else()
+          set(GPU_TARGETS ${FLAG} CACHE STRING "The target architecture for HIP" FORCE)
+        endif()
         set(KOKKOS_HIP_ARCHITECTURES ${FLAG} PARENT_SCOPE)
       endif()
       if(NOT KOKKOS_IMPL_AMDGPU_FLAGS)
