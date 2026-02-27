@@ -74,6 +74,18 @@ list(APPEND CMAKE_MODULE_PATH cmake/Modules)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
+if(Kokkos_ENABLE_HIP)
+  #We need to make sure we know if anyone or any other find_package(hip) call set GPU_TARGETS before our first call to find_package(hip).
+  #This is because if it was undefined, we can safely overwrite it with our Kokkos_ARCH. If it was defined we should error out.
+  if(DEFINED GPU_TARGETS)
+    set(KOKKOS_IMPL_GPU_TARGETS_DETECTED ON CACHE BOOL "Something already created GPU_TARGETS before Kokkos did" FORCE)
+  else()
+    set(KOKKOS_IMPL_GPU_TARGETS_DETECTED OFF CACHE BOOL "Something already created GPU_TARGETS before Kokkos did" FORCE)
+    #this basically disables the hip autodetection allowing us to use our flags
+    set(GPU_TARGETS "")
+  endif()
+endif()
+
 # What language are we compiling Kokkos as
 # downstream dependencies need to match this!
 set(KOKKOS_COMPILE_LANGUAGE CXX)
