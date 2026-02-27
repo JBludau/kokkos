@@ -1054,23 +1054,23 @@ function(CHECK_AMDGPU_ARCH ARCH FLAG)
     else()
       if(KOKKOS_ENABLE_HIP)
         #if they were already defined before we called find_package(hip), we check if they are compatible to our arch
-        if(DEFINED GPU_TARGETS AND KOKKOS_IMPL_GPU_TARGETS_DETECTED)
+        if(KOKKOS_IMPL_GPU_TARGETS_DETECTED)
           foreach(arch IN LISTS GPU_TARGETS)
             if(NOT (arch STREQUAL ${FLAG}))
-              if(KOKKOS_ENABLE_DEPRECATED_CODE_5)
+              if(KOKKOS_ENABLE_DEPRECATED_CODE_4)
                 set(MESSAGE_TYPE WARNING)
               else()
                 set(MESSAGE_TYPE FATAL_ERROR)
               endif()
               message(
                 ${MESSAGE_TYPE}
-                "AMD GPU architectures given via GPU_TARGETS=${GPU_TARGETS} are not compatible with the architecture enabled in Kokkos which is @KOKKOS_HIP_ARCHITECTURES@. Kokkos allows only one device architecture to be active. If you did not set GPU_TARGETS check if there are multiple packages that call find_package(hip), try do put find_package(Kokkos) first."
+                "AMD GPU architectures given via GPU_TARGETS=${GPU_TARGETS} are not compatible with the architecture enabled in Kokkos which is @KOKKOS_HIP_ARCHITECTURES@. Kokkos allows only one device architecture to be active. If you did not set GPU_TARGETS check if there are multiple packages that call find_package(hip), try do put find_package(Kokkos) first or set GPU_TARGETS to the architecture enabled in Kokkos."
               )
             endif()
           endforeach()
           #otherwise we just set them for all downstream things
         else()
-          set(GPU_TARGETS ${FLAG} CACHE STRING "The target architecture for HIP set by Kokkos" FORCE)
+          set(GPU_TARGETS ${FLAG} PARENT_SCOPE)
         endif()
         set(KOKKOS_HIP_ARCHITECTURES ${FLAG} PARENT_SCOPE)
       endif()
