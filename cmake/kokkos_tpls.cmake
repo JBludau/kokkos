@@ -24,6 +24,22 @@ kokkos_tpl_option(CUDA ${Kokkos_ENABLE_CUDA} TRIBITS CUDA)
 kokkos_tpl_option(ROCM ${Kokkos_ENABLE_HIP})
 kokkos_tpl_option(ROCTHRUST ${Kokkos_ENABLE_HIP})
 
+# FIXME_HIP
+# This is here to move our first find_package(hip) call to after we processed the arch detection.
+# The origin of the problem is that find_package(hip) does an automatic detection of GPU archs into GPU_TARGETS.
+# Since MALLOC_ASYNC is enabled based on the hip version, it is moved here to not require an earlier find_package(hip) call
+if(KOKKOS_ENABLE_HIP)
+  if(hip_VERSION VERSION_GREATER_EQUAL 7.0.0)
+    set(HIP_MALLOC_ASYNC_DEFAULT OFF)
+  else()
+    set(HIP_MALLOC_ASYNC_DEFAULT ${KOKKOS_ENABLE_HIP})
+  endif()
+  kokkos_enable_option(IMPL_HIP_MALLOC_ASYNC ${HIP_MALLOC_ASYNC_DEFAULT} "Whether to enable hipMallocAsync")
+  if((hip_VERSION VERSION_GREATER_EQUAL 7.0.0) AND Kokkos_ENABLE_IMPL_HIP_MALLOC_ASYNC)
+    message(WARNING "Using Kokkos_ENABLE_IMPL_HIP_MALLOC_ASYNC is problematic with ROCm 7")
+  endif()
+endif()
+
 if(KOKKOS_ENABLE_SYCL)
   set(ONEDPL_DEFAULT ON)
 else()

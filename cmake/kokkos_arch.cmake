@@ -1054,7 +1054,10 @@ function(CHECK_AMDGPU_ARCH ARCH FLAG)
     else()
       if(KOKKOS_ENABLE_HIP)
         # if other gpu targets were already defined before we called find_package(hip), we check if they are compatible with the architecture selected in Kokkos
-        if(KOKKOS_IMPL_GPU_TARGETS_DETECTED)
+        if(DEFINED AMDGPU_TARGETS)
+          set(GPU_TARGETS ${AMDGPU_TARGETS})
+        endif()
+        if(DEFINED GPU_TARGETS)
           foreach(arch IN LISTS GPU_TARGETS)
             if(NOT (arch STREQUAL ${FLAG}))
               if(KOKKOS_ENABLE_DEPRECATED_CODE_5)
@@ -1064,7 +1067,7 @@ function(CHECK_AMDGPU_ARCH ARCH FLAG)
               endif()
               message(
                 ${MESSAGE_TYPE}
-                "AMD GPU architectures given via GPU_TARGETS=${GPU_TARGETS} are not compatible with the architecture enabled in Kokkos which is @KOKKOS_HIP_ARCHITECTURES@. Kokkos allows only one device architecture to be active. If you did not set GPU_TARGETS, ensure that find_package(Kokkos) is called before other (possibly implicit) calls to find_package(hip) or set GPU_TARGETS to the architecture enabled in Kokkos before any calls to find_package."
+                "AMD GPU architectures given via AMDGPU_TARGETS/GPU_TARGETS=${GPU_TARGETS} are not compatible with the architecture enabled in Kokkos which is ${FLAG}. Kokkos allows only one device architecture to be active. If you did not set AMDGPU_TARGETS/GPU_TARGETS, ensure that find_package(Kokkos) is called before other (possibly implicit) calls to find_package(hip) or set AMDGPU_TARGETS/GPU_TARGETS to the architecture enabled in Kokkos before any calls to find_package."
               )
             endif()
           endforeach()
@@ -1438,6 +1441,7 @@ foreach(ARCH IN LISTS SUPPORTED_AMD_ARCHS)
       set(KOKKOS_ARCH_NAVI1030 ON)
       break()
     endif()
+    set(GPU_TARGETS ${ARCH})
   endif()
 endforeach()
 
