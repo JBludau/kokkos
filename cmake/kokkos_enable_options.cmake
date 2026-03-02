@@ -104,23 +104,6 @@ kokkos_enable_option(
   HIP_MULTIPLE_KERNEL_INSTANTIATIONS OFF
   "Whether multiple kernels are instantiated at compile time - improve performance but increase compile time"
 )
-# FIXME_HIP
-if(KOKKOS_ENABLE_HIP)
-  #We need to make sure we know if anyone or any other find_package(hip) call set GPU_TARGETS before our first call to find_package(hip).
-  #This is because if it was undefined, we can safely overwrite it with our Kokkos_ARCH. If it was defined we should error out.
-  if(DEFINED AMDGPU_TARGETS)
-    set(GPU_TARGETS ${AMDGPU_TARGETS})
-  endif()
-  if(DEFINED GPU_TARGETS)
-    set(KOKKOS_IMPL_GPU_TARGETS_DETECTED ON CACHE BOOL "Something already created GPU_TARGETS before Kokkos did" FORCE)
-  else()
-    set(KOKKOS_IMPL_GPU_TARGETS_DETECTED OFF CACHE BOOL "Something already created GPU_TARGETS before Kokkos did" FORCE)
-    #this basically disables the hip autodetection allowing us to use our flags
-    set(GPU_TARGETS "")
-  endif()
-  #here just for the version, can be removed with the fixme as it will be found by our TPL processing
-  find_package(hip REQUIRED PATHS ${ROCM_PATH} $ENV{ROCM_PATH})
-endif()
 
 kokkos_enable_option(OPENACC_FORCE_HOST_AS_DEVICE OFF "Whether to force to use host as a target device for OpenACC")
 
