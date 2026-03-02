@@ -38,6 +38,7 @@ if(KOKKOS_ENABLE_HIP)
   if((hip_VERSION VERSION_GREATER_EQUAL 7.0.0) AND Kokkos_ENABLE_IMPL_HIP_MALLOC_ASYNC)
     message(WARNING "Using Kokkos_ENABLE_IMPL_HIP_MALLOC_ASYNC is problematic with ROCm 7")
   endif()
+  check_device_specific_options(DEVICE HIP OPTIONS IMPL_HIP_MALLOC_ASYNC)
 endif()
 
 if(KOKKOS_ENABLE_SYCL)
