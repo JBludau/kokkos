@@ -1453,21 +1453,19 @@ if(Kokkos_ENABLE_HIP)
   if(DEFINED AMDGPU_TARGETS AND NOT DEFINED GPU_TARGETS)
     set(GPU_TARGETS ${AMDGPU_TARGETS})
   endif()
-  if(DEFINED GPU_TARGETS)
-    foreach(arch IN LISTS GPU_TARGETS)
-      if(NOT (arch STREQUAL ${KOKKOS_HIP_ARCHITECTURES}))
-        if(KOKKOS_ENABLE_DEPRECATED_CODE_5)
-          set(MESSAGE_TYPE WARNING)
-        else()
-          set(MESSAGE_TYPE FATAL_ERROR)
-        endif()
-        message(
-          ${MESSAGE_TYPE}
-          "AMD GPU architectures given via AMDGPU_TARGETS/GPU_TARGETS=${GPU_TARGETS} are not compatible with the architecture enabled in Kokkos which is ${FLAG}. Kokkos allows only one device architecture to be active. To resolve this set AMDGPU_TARGETS/GPU_TARGETS=${FLAG}."
-        )
+  foreach(arch IN LISTS GPU_TARGETS)
+    if(NOT (arch STREQUAL ${KOKKOS_HIP_ARCHITECTURES}))
+      if(KOKKOS_ENABLE_DEPRECATED_CODE_5)
+        set(MESSAGE_TYPE WARNING)
+      else()
+        set(MESSAGE_TYPE FATAL_ERROR)
       endif()
-    endforeach()
-  endif()
+      message(
+        ${MESSAGE_TYPE}
+        "AMD GPU architectures given via AMDGPU_TARGETS/GPU_TARGETS=${GPU_TARGETS} are not compatible with the architecture enabled in Kokkos which is ${FLAG}. Kokkos allows only one device architecture to be active. To resolve this set AMDGPU_TARGETS/GPU_TARGETS=${FLAG}."
+      )
+    endif()
+  endforeach()
 endif()
 
 #CMake verbose is kind of pointless
