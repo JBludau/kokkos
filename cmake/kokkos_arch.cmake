@@ -1448,6 +1448,34 @@ foreach(ARCH IN LISTS SUPPORTED_AMD_ARCHS)
   endif()
 endforeach()
 
+#FIXME_HIP right now we only check if the arch autodetected by hip is the same as the one enabled in Kokkos. If not we warn/error
+if(Kokkos_ENABLE_HIP)
+  if(DEFINED AMDGPU_TARGETS AND NOT DEFINED GPU_TARGETS)
+    set(GPU_TARGETS ${AMDGPU_TARGETS})
+  endif()
+  if(DEFINED GPU_TARGETS)
+    foreach(ARCH IN LISTS SUPPORTED_AMD_ARCHS)
+      if(KOKKOS_ARCH_${ARCH})
+        list(FIND SUPPORTED_AMD_ARCHS ${ARCH} LIST_INDEX)
+        list(GET CORRESPONDING_AMD_FLAGS ${LIST_INDEX} FLAG)
+        foreach(arch IN LISTS GPU_TARGETS)
+          if(NOT (arch STREQUAL ${FLAG}))
+            if(KOKKOS_ENABLE_DEPRECATED_CODE_5)
+              set(MESSAGE_TYPE WARNING)
+            else()
+              set(MESSAGE_TYPE FATAL_ERROR)
+            endif()
+            message(
+              ${MESSAGE_TYPE}
+              "AMD GPU architectures given via AMDGPU_TARGETS/GPU_TARGETS=${GPU_TARGETS} are not compatible with the architecture enabled in Kokkos which is ${FLAG}. Kokkos allows only one device architecture to be active. If you did not set AMDGPU_TARGETS/GPU_TARGETS, ensure that find_package(Kokkos) is called before other (possibly implicit) calls to find_package(hip) or set AMDGPU_TARGETS/GPU_TARGETS to the architecture enabled in Kokkos before any calls to find_package."
+            )
+          endif()
+        endforeach()
+      endif()
+    endforeach()
+  endif()
+endif()
+
 #CMake verbose is kind of pointless
 #Let's just always print things
 message(STATUS "Built-in Execution Spaces:")
