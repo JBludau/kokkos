@@ -1462,7 +1462,7 @@ if(Kokkos_ENABLE_HIP)
       endif()
       message(
         ${MESSAGE_TYPE}
-        "AMD GPU architectures given via AMDGPU_TARGETS/GPU_TARGETS=${GPU_TARGETS} are not compatible with the architecture enabled in Kokkos which is ${KOKKOS_HIP_ARCHITECTURES}. Kokkos allows only one device architecture to be active. To resolve this, configure with -DGPU_TARGETS=${KOKKOS_HIP_ARCHITECTURES} to prevent it from being set implicitly by find_package calls."
+        "AMD GPU architectures given via GPU_TARGETS=${GPU_TARGETS} are not compatible with the architecture enabled in Kokkos which is ${KOKKOS_HIP_ARCHITECTURES}. Kokkos allows only one device architecture to be active. To resolve this, configure with -DGPU_TARGETS=\"${KOKKOS_HIP_ARCHITECTURES}\" to prevent it from being set implicitly by find_package calls."
       )
     endif()
   endforeach()
