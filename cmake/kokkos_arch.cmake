@@ -1450,9 +1450,6 @@ endforeach()
 
 #FIXME_HIP right now we only check if the arch autodetected by hip is the same as the one enabled in Kokkos. If not we warn/error
 if(Kokkos_ENABLE_HIP)
-  if(DEFINED AMDGPU_TARGETS AND NOT DEFINED GPU_TARGETS)
-    set(GPU_TARGETS ${AMDGPU_TARGETS})
-  endif()
   foreach(arch IN LISTS GPU_TARGETS)
     if(NOT (arch STREQUAL KOKKOS_HIP_ARCHITECTURES))
       if(KOKKOS_ENABLE_DEPRECATED_CODE_5)
