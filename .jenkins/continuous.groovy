@@ -283,6 +283,43 @@ pipeline {
         }
         stage('Build-2') {
             parallel {
+                stage('spack-rocm') {
+                    agent {
+                        docker {
+                            filename 'Dockerfile.hipcc'
+                            dir 'scripts/docker'
+                            additionalBuildArgs '--build-arg BASE=rocm/dev-ubuntu-24.04:7.0-complete'
+                            label 'rocm-docker && AMD_Radeon_Instinct_MI210'
+                            args '-v /tmp/ccache.kokkos:/tmp/ccache --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video --env HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES'
+                        }
+                    }
+                    steps {
+                        sh '''
+                          DEBIAN_FRONTEND=noninteractive && \
+                          apt-get update && apt-get upgrade -y && apt-get install -y \
+                          build-essential \
+                          wget \
+                          git \
+                          bc \
+                          python3-dev \
+                          gfortran \
+                          && \
+                          apt-get clean && rm -rf /var/lib/apt/lists/*
+
+                          export CDASH_ARGS="${SPACK_CDASH_ARGS} --cdash-build=spack-rocm"
+                          rm -rf spack && \
+                          git clone https://github.com/spack/spack.git && \
+                          . ./spack/share/spack/setup-env.sh && \
+                          spack install -v --only=dependencies kokkos@develop+rocm+tests amdgpu_target=gfx908a:xnack+ ^rocm@7.0 && \
+                          spack install -v --only=package ${CDASH_ARGS} kokkos@develop+rocm+tests amdgpu_target=gfx90a:xnack+ ^rocm@7.0 && \
+                          spack load cmake  && \
+                          spack load rocm && \
+                          spack load kokkos && \
+                          spack test run ${CDASH_ARGS} kokkos && \
+                          spack test results -l
+                          '''
+                    }
+                }
                 stage('OPENACC-NVHPC-CUDA-12.2') {
                     agent {
                         dockerfile {
