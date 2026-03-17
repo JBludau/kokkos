@@ -285,7 +285,7 @@ pipeline {
             parallel {
                 stage('spack-rocm') {
                     agent {
-                        docker {
+                        dockerfile {
                             filename 'Dockerfile.hipcc'
                             dir 'scripts/docker'
                             additionalBuildArgs '--build-arg BASE=rocm/dev-ubuntu-24.04:7.0-complete'
