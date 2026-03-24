@@ -298,7 +298,6 @@ pipeline {
                           DEBIAN_FRONTEND=noninteractive && \
                           apt-get update && apt-get upgrade -y && apt-get install -y \
                           build-essential \
-                          wget \
                           git \
                           bc \
                           python3-dev \
