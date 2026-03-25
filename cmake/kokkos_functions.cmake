@@ -954,6 +954,42 @@ int main()
   set(${_VAR} ${_RET} CACHE STRING "CXX compiler supports building CUDA")
 endfunction()
 
+# this function is provided to print messages from configure log:
+#
+#       KEYWORD     --> Keyword in a compile line that should be printed
+#
+function(kokkos_print_configure_log)
+  cmake_parse_arguments(INP "" "KEYWORD" "" ${ARGN})
+
+  if(NOT INP_KEYWORD)
+    message(FATAL_ERROR "'kokkos_print_configure_log' requires KEYWORD keyword")
+  endif()
+
+  if(CMAKE_VERSION VERSION_GREATER 3.26.0)
+    set(OUTPUT_BLOCK "")
+    set(START_OUTPUT FALSE)
+    file(STRINGS "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeConfigureLog.yaml" LOG_LINES)
+
+    foreach(LINE IN LISTS LOG_LINES)
+      if(LINE MATCHES "${INP_KEYWORD}")
+        set(START_OUTPUT TRUE)
+      endif()
+
+      if(START_OUTPUT)
+        string(APPEND OUTPUT_BLOCK "${LINE}\n")
+      endif()
+
+      if(LINE MATCHES "exitCode" AND START_OUTPUT)
+        break()
+      endif()
+    endforeach()
+    if(START_OUTPUT)
+      message(WARNING "ConfigureLog.yaml shows:\n ${OUTPUT_BLOCK}")
+    endif()
+  endif()
+
+endfunction()
+
 # this function is provided to easily select which files use nvcc_wrapper:
 #
 #       COMPILER    --> do check for compiler
