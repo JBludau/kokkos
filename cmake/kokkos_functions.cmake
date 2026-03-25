@@ -1029,6 +1029,7 @@ function(kokkos_check_flags)
         WARNING
           "The compiler for ${KOKKOS_COMPILE_LANGUAGE} can not consume flag(s) ${QUOTED_FLAGS} in combination with the CMAKE_${KOKKOS_COMPILE_LANGUAGE}_FLAGS=${CMAKE_${KOKKOS_COMPILE_LANGUAGE}_FLAGS}. Please check the given configuration."
       )
+      kokkos_print_configure_log(KEYWORD "-DKOKKOS_COMPILE_OPTIONS_CHECK")
     endif()
   endif()
 
@@ -1044,6 +1045,7 @@ function(kokkos_check_flags)
         WARNING
           "The linker for ${KOKKOS_COMPILE_LANGUAGE} can not consume flag(s) ${QUOTED_FLAGS}. Please check the given configuration."
       )
+      kokkos_print_configure_log(KEYWORD "-DKOKKOS_LINK_OPTIONS_CHECK")
     endif()
   endif()
 endfunction()
