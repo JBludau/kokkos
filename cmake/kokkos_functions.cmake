@@ -984,7 +984,7 @@ function(kokkos_print_configure_log)
       endif()
     endforeach()
     if(START_OUTPUT)
-      message(WARNING "ConfigureLog.yaml shows:\n ${OUTPUT_BLOCK}")
+      message(WARNING "ConfigureLog.yaml shows:\n${OUTPUT_BLOCK}")
     endif()
   endif()
 
