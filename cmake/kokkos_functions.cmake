@@ -965,7 +965,7 @@ function(kokkos_print_configure_log)
     message(FATAL_ERROR "'kokkos_print_configure_log' requires KEYWORD keyword")
   endif()
 
-  if(CMAKE_VERSION VERSION_GREATER 3.26.0)
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.26.0)
     set(OUTPUT_BLOCK "")
     set(START_OUTPUT FALSE)
     file(STRINGS "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeConfigureLog.yaml" LOG_LINES)
