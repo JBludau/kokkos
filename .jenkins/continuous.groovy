@@ -288,7 +288,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.hipcc'
                             dir 'scripts/docker'
-                            additionalBuildArgs '--build-arg BASE=rocm/dev-ubuntu-24.04:7.0-complete'
+                            additionalBuildArgs '--build-arg BASE=rocm/dev-ubuntu-24.04:7.2.1-complete'
                             label 'rocm-docker && AMD_Radeon_Instinct_MI210'
                             args '-v /tmp/ccache.kokkos:/tmp/ccache --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video --env HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES'
                         }
