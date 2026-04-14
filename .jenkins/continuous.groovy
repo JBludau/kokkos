@@ -309,6 +309,7 @@ pipeline {
                           rm -rf spack && \
                           git clone https://github.com/spack/spack.git && \
                           . ./spack/share/spack/setup-env.sh && \
+                          spack config add config:installer:old && \
                           spack install -v --only=dependencies kokkos@develop+rocm+tests amdgpu_target=gfx90a ^hip@7 && \
                           spack install -v --only=package ${CDASH_ARGS} kokkos@develop+rocm+tests amdgpu_target=gfx90a ^hip@7 && \
                           spack load cmake  && \
