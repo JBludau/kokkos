@@ -967,7 +967,6 @@ function(kokkos_print_cmake_configure_log START_REGEX END_REGEX)
     file(STRINGS "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeConfigureLog.yaml" LOG_LINES)
 
     foreach(LINE IN LISTS LOG_LINES)
-      #message(STATUS "${START_REGEX} ${LINE}")
       if(LINE MATCHES ${START_REGEX})
         set(START_OUTPUT TRUE)
       endif()
