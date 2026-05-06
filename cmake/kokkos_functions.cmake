@@ -954,16 +954,11 @@ int main()
   set(${_VAR} ${_RET} CACHE STRING "CXX compiler supports building CUDA")
 endfunction()
 
-# this function is provided to print messages from configure log:
+# this function is provided to print messages from CMake's configure log:
 #
 #       KEYWORD     --> Keyword in a compile line that should be printed
 #
-function(kokkos_print_configure_log)
-  cmake_parse_arguments(INP "" "KEYWORD" "" ${ARGN})
-
-  if(NOT INP_KEYWORD)
-    message(FATAL_ERROR "'kokkos_print_configure_log' requires KEYWORD keyword")
-  endif()
+function(kokkos_print_cmake_configure_log START_REGEX END_REGEX)
 
   if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.26.0)
     set(OUTPUT_BLOCK "")
@@ -971,7 +966,8 @@ function(kokkos_print_configure_log)
     file(STRINGS "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeConfigureLog.yaml" LOG_LINES)
 
     foreach(LINE IN LISTS LOG_LINES)
-      if(LINE MATCHES "${INP_KEYWORD}")
+      #message(STATUS "${START_REGEX} ${LINE}")
+      if(LINE MATCHES ${START_REGEX})
         set(START_OUTPUT TRUE)
       endif()
 
@@ -979,7 +975,7 @@ function(kokkos_print_configure_log)
         string(APPEND OUTPUT_BLOCK "${LINE}\n")
       endif()
 
-      if(LINE MATCHES "exitCode" AND START_OUTPUT)
+      if(LINE MATCHES ${END_REGEX} AND START_OUTPUT)
         break()
       endif()
     endforeach()
@@ -1029,7 +1025,7 @@ function(kokkos_check_flags)
         WARNING
           "The compiler for ${KOKKOS_COMPILE_LANGUAGE} can not consume flag(s) ${QUOTED_FLAGS} in combination with the CMAKE_${KOKKOS_COMPILE_LANGUAGE}_FLAGS=${CMAKE_${KOKKOS_COMPILE_LANGUAGE}_FLAGS}. Please check the given configuration."
       )
-      kokkos_print_configure_log(KEYWORD "-DKOKKOS_COMPILE_OPTIONS_CHECK")
+      kokkos_print_cmake_configure_log("DKOKKOS_COMPILE_OPTIONS_CHECK" "exitCode")
     endif()
   endif()
 
@@ -1045,7 +1041,7 @@ function(kokkos_check_flags)
         WARNING
           "The linker for ${KOKKOS_COMPILE_LANGUAGE} can not consume flag(s) ${QUOTED_FLAGS}. Please check the given configuration."
       )
-      kokkos_print_configure_log(KEYWORD "-DKOKKOS_LINK_OPTIONS_CHECK")
+      kokkos_print_cmake_configure_log("DKOKKOS_LINK_OPTIONS_CHECK" "exitCode")
     endif()
   endif()
 endfunction()
