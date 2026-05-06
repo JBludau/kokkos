@@ -956,7 +956,8 @@ endfunction()
 
 # this function is provided to print messages from CMake's configure log:
 #
-#       KEYWORD     --> Keyword in a compile line that should be printed
+#       START_REGEX     --> Keyword to mark start of output
+#       END_REGEX       --> Keyword to mark end of output
 #
 function(kokkos_print_cmake_configure_log START_REGEX END_REGEX)
 
