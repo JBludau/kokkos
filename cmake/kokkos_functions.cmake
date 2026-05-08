@@ -1025,7 +1025,7 @@ function(kokkos_check_flags)
         WARNING
           "The compiler for ${KOKKOS_COMPILE_LANGUAGE} can not consume flag(s) ${QUOTED_FLAGS} in combination with the CMAKE_${KOKKOS_COMPILE_LANGUAGE}_FLAGS=${CMAKE_${KOKKOS_COMPILE_LANGUAGE}_FLAGS}. Please check the given configuration."
       )
-      kokkos_print_cmake_configure_log("DKOKKOS_COMPILE_OPTIONS_CHECK" "exitCode")
+      kokkos_print_cmake_configure_log("D ?KOKKOS_COMPILE_OPTIONS_CHECK" "exitCode")
     endif()
   endif()
 
