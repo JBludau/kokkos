@@ -1041,7 +1041,7 @@ function(kokkos_check_flags)
         WARNING
           "The linker for ${KOKKOS_COMPILE_LANGUAGE} can not consume flag(s) ${QUOTED_FLAGS}. Please check the given configuration."
       )
-      kokkos_print_cmake_configure_log("DKOKKOS_LINK_OPTIONS_CHECK" "exitCode")
+      kokkos_print_cmake_configure_log("D ?KOKKOS_LINK_OPTIONS_CHECK" "exitCode")
     endif()
   endif()
 endfunction()
