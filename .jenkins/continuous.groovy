@@ -302,6 +302,7 @@ pipeline {
                           bc \
                           python3-dev \
                           gfortran \
+                          unzip \
                           && \
                           apt-get clean && rm -rf /var/lib/apt/lists/*
 
