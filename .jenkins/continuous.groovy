@@ -66,7 +66,7 @@ pipeline {
                           spack install -v --only=dependencies kokkos@develop+rocm+tests amdgpu_target=gfx90a ^hip@7 && \
                           spack install -v --only=package ${CDASH_ARGS} kokkos@develop+rocm+tests amdgpu_target=gfx90a ^hip@7 && \
                           spack load cmake  && \
-                          spack load rocm && \
+                          spack load hip && \
                           spack load kokkos && \
                           spack test run ${CDASH_ARGS} kokkos && \
                           spack test results -l
