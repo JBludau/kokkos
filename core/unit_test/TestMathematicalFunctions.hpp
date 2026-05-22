@@ -19,6 +19,8 @@ import kokkos.core;
 #include <cstdint>
 #include <cfloat>
 
+#include "KokkosTest_Utils.hpp"
+
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || \
     defined(KOKKOS_ENABLE_SYCL) || defined(KOKKOS_ENABLE_OPENACC)
 #else
@@ -219,104 +221,6 @@ using math_binary_function_return_type_t = typename math_binary_function_return_
 template <class T, class U, class V>
 using math_ternary_function_return_type_t = math_binary_function_return_type_t<
     T, math_binary_function_return_type_t<U, V>>;
-
-struct FloatingPointComparison {
- private:
-  template <class T>
-  KOKKOS_FUNCTION double eps(T) const {
-    return DBL_EPSILON;
-  }
-#if defined(KOKKOS_HALF_T_IS_FLOAT) && !KOKKOS_HALF_T_IS_FLOAT
-  KOKKOS_FUNCTION
-  KE::half_t eps(KE::half_t) const {
-// FIXME_NVHPC compile-time error
-#ifdef KOKKOS_COMPILER_NVHPC
-    return 0.0009765625F;
-#else
-    return KE::epsilon<KE::half_t>::value;
-#endif
-  }
-#endif
-#if defined(KOKKOS_BHALF_T_IS_FLOAT) && !KOKKOS_BHALF_T_IS_FLOAT
-  KOKKOS_FUNCTION
-  KE::bhalf_t eps(KE::bhalf_t) const {
-// FIXME_NVHPC compile-time error
-#ifdef KOKKOS_COMPILER_NVHPC
-    return 0.0078125;
-#else
-    return KE::epsilon<KE::bhalf_t>::value;
-#endif
-  }
-#endif
-  KOKKOS_FUNCTION
-  double eps(float) const { return FLT_EPSILON; }
-// POWER9 gives unexpected values with LDBL_EPSILON issues
-// https://stackoverflow.com/questions/68960416/ppc64-long-doubles-machine-epsilon-calculation
-#if defined(KOKKOS_ARCH_POWER9) || defined(KOKKOS_ARCH_POWER8)
-  KOKKOS_FUNCTION
-  double eps(long double) const { return DBL_EPSILON; }
-#else
-  KOKKOS_FUNCTION
-  double eps(long double) const { return LDBL_EPSILON; }
-#endif
-  // Using absolute here instead of abs, since we actually test abs ...
-  template <class T>
-  KOKKOS_FUNCTION std::enable_if_t<std::is_signed_v<T>, T> absolute(
-      T val) const {
-    return val < T(0) ? -val : val;
-  }
-
-  template <class T>
-  KOKKOS_FUNCTION std::enable_if_t<!std::is_signed_v<T>, T> absolute(
-      T val) const {
-    return val;
-  }
-
- public:
-  template <class FPT>
-  KOKKOS_FUNCTION bool compare_near_zero(FPT const& fpv, int ulp) const {
-    auto abs_tol = eps(fpv) * ulp;
-
-    bool ar = absolute(fpv) <= abs_tol;
-    if (!ar) {
-      Kokkos::printf("absolute value exceeds tolerance [|%e| > %e]\n",
-                     (double)fpv, (double)abs_tol);
-    }
-
-    return ar;
-  }
-
-  template <class Lhs, class Rhs>
-  KOKKOS_FUNCTION bool compare(Lhs const& lhs, Rhs const& rhs, int ulp) const {
-    if (lhs == 0) {
-      return compare_near_zero(rhs, ulp);
-    } else if (rhs == 0) {
-      return compare_near_zero(lhs, ulp);
-    } else {
-      auto rel_tol     = (eps(lhs) < eps(rhs) ? eps(lhs) : eps(rhs)) * ulp;
-      double abs_diff  = static_cast<double>(rhs > lhs ? rhs - lhs : lhs - rhs);
-      double min_denom = static_cast<double>(
-          absolute(rhs) < absolute(lhs) ? absolute(rhs) : absolute(lhs));
-      double rel_diff = abs_diff / min_denom;
-      bool ar         = rel_diff <= rel_tol;
-      if (!ar) {
-        Kokkos::printf("relative difference exceeds tolerance [%e > %e]\n",
-                       (double)rel_diff, (double)rel_tol);
-      }
-
-      return ar;
-    }
-  }
-};
-
-struct IntegerComparison {
-  template <class Lhs, class Rhs>
-  KOKKOS_FUNCTION bool compare(Lhs const& lhs, Rhs const& rhs) const {
-    static_assert(std::is_integral_v<Lhs>);
-    static_assert(std::is_integral_v<Rhs>);
-    return lhs == rhs;
-  }
-};
 
 template <class Floating>
 struct ConvertibleTo {
@@ -781,7 +685,7 @@ DEFINE_TYPE_NAME(long double)
 
 template <class Space, class Func, class Arg, std::size_t N,
           class Ret = math_unary_function_return_type_t<Arg>>
-struct TestMathUnaryFunction : FloatingPointComparison {
+struct TestMathUnaryFunction : KokkosTest::FloatingPointComparison {
   Arg val_[N];
   Ret res_[N];
   TestMathUnaryFunction(const Arg (&val)[N]) {
@@ -843,7 +747,7 @@ void do_test_half_math_unary_function(const Arg (&x)[N]) {
   do_test_half_math_unary_function<T, TEST_EXECSPACE, MathUnaryFunction_##FUNC>
 
 template <class Space, class Func, class Arg, std::size_t N>
-struct TestIntMathUnaryFunction : IntegerComparison {
+struct TestIntMathUnaryFunction : KokkosTest::IntegerComparison {
   Arg val_[N];
   int res_[N];
   TestIntMathUnaryFunction(const Arg (&val)[N]) {
@@ -907,7 +811,7 @@ void do_test_int_half_math_unary_function(const Arg (&x)[N]) {
 
 template <class Space, class Func, class Arg1, class Arg2,
           class Ret = math_binary_function_return_type_t<Arg1, Arg2>>
-struct TestMathBinaryFunction : FloatingPointComparison {
+struct TestMathBinaryFunction : KokkosTest::FloatingPointComparison {
   Arg1 val1_;
   Arg2 val2_;
   Ret res_;
@@ -942,7 +846,7 @@ void do_test_math_binary_function(Arg1 arg1, Arg2 arg2) {
 
 template <class Space, class Func, class Arg1, class Arg2,
           class Ret = math_unary_function_return_type_t<Arg1>>
-struct TestMathBinaryIntFunction : FloatingPointComparison {
+struct TestMathBinaryIntFunction : KokkosTest::FloatingPointComparison {
   Arg1 val1_;
   Arg2 val2_;
   Ret res_;
@@ -977,7 +881,7 @@ void do_test_math_binary_int_function(Arg1 arg1, Arg2 arg2) {
 
 template <class Space, class Func, class Arg,
           class Ret = math_unary_function_return_type_t<Arg>>
-struct TestMathBinaryPtrFunction : FloatingPointComparison {
+struct TestMathBinaryPtrFunction : KokkosTest::FloatingPointComparison {
   Arg val_;
   Ret res_frac_;
   Ret res_int_;
@@ -1056,7 +960,7 @@ void do_test_math_binary_predicate(Arg1 arg1, Arg2 arg2) {
 
 template <class Space, class Func, class Arg,
           class Ret = math_unary_function_return_type_t<Arg>>
-struct TestMathBinaryIntPtrFunction : FloatingPointComparison {
+struct TestMathBinaryIntPtrFunction : KokkosTest::FloatingPointComparison {
   Arg val_;
   int res1_;
   Ret res2_;
@@ -1100,7 +1004,7 @@ void do_test_math_binary_int_ptr_function(Arg x) {
 
 template <class Space, class Func, class Arg1, class Arg2,
           class Ret = math_binary_function_return_type_t<Arg1, Arg2>>
-struct TestMathTernaryIntPtrFunction : FloatingPointComparison {
+struct TestMathTernaryIntPtrFunction : KokkosTest::FloatingPointComparison {
   Arg1 val1_;
   Arg2 val2_;
   int val_;
@@ -1140,7 +1044,7 @@ void do_test_math_ternary_int_ptr_function(Arg1 arg1, Arg2 arg2) {
 
 template <class Space, class Func, class Arg1, class Arg2, class Arg3,
           class Ret = math_ternary_function_return_type_t<Arg1, Arg2, Arg3>>
-struct TestMathTernaryFunction : FloatingPointComparison {
+struct TestMathTernaryFunction : KokkosTest::FloatingPointComparison {
   Arg1 val1_;
   Arg2 val2_;
   Arg3 val3_;
@@ -2104,7 +2008,8 @@ TEST(TEST_CATEGORY, mathematical_functions_floating_point_absolute_value) {
 }
 
 template <class Space>
-struct TestFloatingPointRemainderFunction : FloatingPointComparison {
+struct TestFloatingPointRemainderFunction
+    : KokkosTest::FloatingPointComparison {
   TestFloatingPointRemainderFunction() { run(); }
   void run() const {
     int errors = 0;
@@ -2181,7 +2086,8 @@ TEST(TEST_CATEGORY, mathematical_functions_remainder_function) {
 }
 
 template <class Space>
-struct TestIEEEFloatingPointRemainderFunction : FloatingPointComparison {
+struct TestIEEEFloatingPointRemainderFunction
+    : KokkosTest::FloatingPointComparison {
   TestIEEEFloatingPointRemainderFunction() { run(); }
   void run() const {
     int errors = 0;
