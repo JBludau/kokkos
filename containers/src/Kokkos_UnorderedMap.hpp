@@ -82,6 +82,7 @@ auto allocate_with_sequential_host_init_if_possible(
 
 // FIXME_SYCL This forces compare and swap to be used for the store as a simple
 // store is not visible to other threads with SYCL
+#ifdef KOKKOS_ENABLE_SYCL
 template <typename T>
 KOKKOS_FORCEINLINE_FUNCTION void store_workaround(T *const ref, T value) {
   KOKKOS_IF_ON_HOST(
@@ -93,6 +94,7 @@ KOKKOS_FORCEINLINE_FUNCTION void store_workaround(T *const ref, T value) {
            desul::Impl::_store_fetch_operator<T, const T>(), ref, value,
            desul::MemoryOrderRelaxed(), desul::MemoryScopeDevice());))
 }
+#endif
 
 }  // namespace Impl
 
