@@ -30,15 +30,16 @@ namespace Kokkos {
     KOKKOS_COMPILER_INTEL_LLVM < 20260000
 template <typename T>
 KOKKOS_FORCEINLINE_FUNCTION T volatile_load(T const volatile* const src_ptr) {
-  KOKKOS_IF_ON_HOST((desul::Impl::device_atomic_fetch_oper(
-                         desul::Impl::_load_fetch_operator<T, const T>(),
-                         const_cast<std::remove_volatile_t<T>*>(src_ptr), value,
-                         desul::MemoryOrderRelaxed(), KOKKOS_DESUL_MEM_SCOPE);))
+  KOKKOS_IF_ON_HOST(
+      (desul::Impl::device_atomic_fetch_oper(
+           desul::Impl::_load_fetch_operator<T, const T>(),
+           const_cast<std::remove_volatile_t<T>*>(src_ptr), value,
+           desul::MemoryOrderRelaxed(), desul::MemoryScopeDevice());))
   KOKKOS_IF_ON_DEVICE(
       (desul::Impl::device_atomic_fetch_oper(
            desul::Impl::_load_fetch_operator<T, const T>(),
            const_cast<std::remove_volatile_t<T>*>(src_ptr), value,
-           desul::MemoryOrderRelaxed(), KOKKOS_DESUL_MEM_SCOPE);))
+           desul::MemoryOrderRelaxed(), desul::MemoryScopeDevice());))
 }
 #else
 template <typename T>
