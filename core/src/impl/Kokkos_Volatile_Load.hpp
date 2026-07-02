@@ -24,21 +24,21 @@ namespace Kokkos {
 
 //----------------------------------------------------------------------------
 
-// FIXME_SYCL
+// FIXME_SYCL use old compare and swap way of storing value as we saw that
+// otherwise the volatile load will not be honored correctly
 #if defined KOKKOS_ENABLE_SYCL && defined(KOKKOS_COMPILER_INTEL_LLVM) && \
     KOKKOS_COMPILER_INTEL_LLVM < 20260000
 template <typename T>
 KOKKOS_FORCEINLINE_FUNCTION T volatile_load(T const volatile* const src_ptr) {
-  T old = const_cast<const T&>(*src_ptr);
-  T assumed;
-  do {
-    assumed = old;
-    old     = desul::atomic_compare_exchange(
-        const_cast<std::remove_volatile_t<T>*>(src_ptr), assumed, assumed,
-        desul::MemoryOrderRelaxed(), desul::MemoryScopeDevice());
-
-  } while (assumed != old);
-  return old;
+  KOKKOS_IF_ON_HOST((desul::device_atomic_fetch_oper(
+                         desul::_load_fetch_operator<T, const T>(),
+                         const_cast<std::remove_volatile_t<T>*>(src_ptr), value,
+                         desul::MemoryOrderRelaxed(), KOKKOS_DESUL_MEM_SCOPE);))
+  KOKKOS_IF_ON_DEVICE(
+      (desul::device_atomic_fetch_oper(
+           desul::_load_fetch_operator<T, const T>(),
+           const_cast<std::remove_volatile_t<T>*>(src_ptr), value,
+           desul::MemoryOrderRelaxed(), KOKKOS_DESUL_MEM_SCOPE);))
 }
 #else
 template <typename T>

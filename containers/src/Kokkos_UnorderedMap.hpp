@@ -80,16 +80,20 @@ auto allocate_with_sequential_host_init_if_possible(
         std::forward<Args>(args)...);
 }
 
+// FIXME_SYCL This forces compare and swap to be used for the store as a simple
+// store is not visible to other threads with SYCL
 template <typename T>
 KOKKOS_FORCEINLINE_FUNCTION void store_workaround(T *const ref, T value) {
-  T old = *ref;
-  T assumed;
-  do {
-    assumed = old;
-    old     = Kokkos::atomic_compare_exchange(ref, assumed, value);
-
-  } while (assumed != old);
+  KOKKOS_IF_ON_HOST(
+      (desul::host_atomic_fetch_oper(desul::_store_fetch_operator<T, const T>(),
+                                     ref, value, desul::MemoryOrderRelaxed(),
+                                     KOKKOS_DESUL_MEM_SCOPE);));
+  KOKKOS_IF_ON_DEVICE(
+      (desul::device_atomic_fetch_oper(
+           desul::_store_fetch_operator<T, const T>(), ref, value,
+           desul::MemoryOrderRelaxed(), KOKKOS_DESUL_MEM_SCOPE);))
 }
+
 }  // namespace Impl
 
 enum : unsigned { UnorderedMapInvalidIndex = ~0u };
