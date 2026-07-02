@@ -85,12 +85,12 @@ auto allocate_with_sequential_host_init_if_possible(
 template <typename T>
 KOKKOS_FORCEINLINE_FUNCTION void store_workaround(T *const ref, T value) {
   KOKKOS_IF_ON_HOST(
-      (desul::host_atomic_fetch_oper(desul::_store_fetch_operator<T, const T>(),
-                                     ref, value, desul::MemoryOrderRelaxed(),
-                                     KOKKOS_DESUL_MEM_SCOPE);));
+      (desul::Impl::host_atomic_fetch_oper(
+           desul::Impl::_store_fetch_operator<T, const T>(), ref, value,
+           desul::MemoryOrderRelaxed(), KOKKOS_DESUL_MEM_SCOPE);));
   KOKKOS_IF_ON_DEVICE(
-      (desul::device_atomic_fetch_oper(
-           desul::_store_fetch_operator<T, const T>(), ref, value,
+      (desul::Impl::device_atomic_fetch_oper(
+           desul::Impl::_store_fetch_operator<T, const T>(), ref, value,
            desul::MemoryOrderRelaxed(), KOKKOS_DESUL_MEM_SCOPE);))
 }
 
