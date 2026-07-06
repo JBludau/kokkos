@@ -8,6 +8,7 @@
 import kokkos.core;
 #else
 #include <Kokkos_Core.hpp>
+#include <impl/Kokkos_Memcmp.hpp>
 #endif
 
 // clang-format off
@@ -757,20 +758,6 @@ TEST(TEST_CATEGORY, bit_manip_byeswap) {
 #endif
 }
 
-// CUDA doesn't provide memcmp
-KOKKOS_FUNCTION int my_memcmp(void const* lhs, void const* rhs, size_t count) {
-  auto u1 = static_cast<unsigned char const*>(lhs);
-  auto u2 = static_cast<unsigned char const*>(rhs);
-  while (count-- != 0) {
-    if (*u1 != *u2) {
-      return (*u1 < *u2) ? -1 : +1;
-    }
-    ++u1;
-    ++u2;
-  }
-  return 0;
-}
-
 template <class Space>
 struct TestBitCastFunction {
   TestBitCastFunction() { run(); }
@@ -816,7 +803,7 @@ struct TestBitCastFunction {
       int i;
 
       KOKKOS_FUNCTION bool operator==(const char* s) const {
-        return my_memcmp(&i, s, sizeof(i)) == 0;
+        return Kokkos::Impl::memcmp(&i, s, sizeof(i)) == 0;
       }
     };
     char arr[sizeof(int)];
