@@ -8,7 +8,6 @@
 import kokkos.core;
 #else
 #include <Kokkos_Core.hpp>
-#include <impl/Kokkos_Memcmp.hpp>
 #endif
 
 // clang-format off
