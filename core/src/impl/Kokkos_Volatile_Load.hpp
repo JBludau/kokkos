@@ -3,6 +3,7 @@
 
 #include <Kokkos_Macros.hpp>
 #include <desul/atomics.hpp>
+#include <impl/Kokkos_Memcmp.hpp>
 
 #include <type_traits>
 
@@ -24,7 +25,8 @@ namespace Kokkos {
 
 //----------------------------------------------------------------------------
 
-// FIXME_SYCL
+// FIXME_SYCL use old compare and swap way of storing value as we saw that
+// otherwise the volatile load will not be honored correctly
 #if defined KOKKOS_ENABLE_SYCL && defined(KOKKOS_COMPILER_INTEL_LLVM) && \
     KOKKOS_COMPILER_INTEL_LLVM < 20260000
 template <typename T>
@@ -37,7 +39,7 @@ KOKKOS_FORCEINLINE_FUNCTION T volatile_load(T const volatile* const src_ptr) {
         const_cast<std::remove_volatile_t<T>*>(src_ptr), assumed, assumed,
         desul::MemoryOrderRelaxed(), desul::MemoryScopeDevice());
 
-  } while (assumed != old);
+  } while (Kokkos::Impl::memcmp(&assumed, &old, sizeof(T)) != 0);
   return old;
 }
 #else

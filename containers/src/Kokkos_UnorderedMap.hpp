@@ -26,6 +26,7 @@ import kokkos.functional;
 #endif
 #include <Kokkos_Assert.hpp>
 #include <impl/Kokkos_Traits.hpp>
+#include <impl/Kokkos_Memcmp.hpp>
 #include <impl/Kokkos_UnorderedMap_impl.hpp>
 #include <View/Kokkos_ViewCtor.hpp>
 
@@ -80,6 +81,9 @@ auto allocate_with_sequential_host_init_if_possible(
         std::forward<Args>(args)...);
 }
 
+// FIXME_SYCL This forces compare and swap to be used for the store as a simple
+// store is not visible to other threads with SYCL
+#ifdef KOKKOS_ENABLE_SYCL
 template <typename T>
 KOKKOS_FORCEINLINE_FUNCTION void store_workaround(T *const ref, T value) {
   T old = *ref;
@@ -88,8 +92,9 @@ KOKKOS_FORCEINLINE_FUNCTION void store_workaround(T *const ref, T value) {
     assumed = old;
     old     = Kokkos::atomic_compare_exchange(ref, assumed, value);
 
-  } while (assumed != old);
+  } while (Kokkos::Impl::memcmp(&assumed, &old, sizeof(T)) != 0);
 }
+#endif
 }  // namespace Impl
 
 enum : unsigned { UnorderedMapInvalidIndex = ~0u };
