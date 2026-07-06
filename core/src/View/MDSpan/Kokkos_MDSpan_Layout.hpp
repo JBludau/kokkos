@@ -200,6 +200,7 @@ KOKKOS_INLINE_FUNCTION auto mapping_from_array_layout_impl(
           }))
 #endif
 
+      // NOLINTNEXTLINE(bugprone-branch-clone)
       if (layout.stride == KOKKOS_IMPL_CTOR_DEFAULT_ARG) {
         return MappingType{extents_type{
             dextents<index_type, MappingType::extents_type::rank()>{

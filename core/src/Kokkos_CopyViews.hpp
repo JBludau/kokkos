@@ -711,6 +711,7 @@ void view_copy(const DstType& dst, const SrcType& src) {
   // Figure out iteration order in case we need it
   Kokkos::Iterate iterate = get_iteration_order(dst);
 
+  // NOLINTNEXTLINE(bugprone-branch-clone)
   if ((dst.span() >= size_t(std::numeric_limits<int>::max())) ||
       (src.span() >= size_t(std::numeric_limits<int>::max()))) {
     if (iterate == Kokkos::Iterate::Right)
@@ -1032,6 +1033,7 @@ inline void deep_copy(
       std::conditional_t<ViewType::rank == 0,
                          typename ViewType::uniform_runtime_type,
                          typename ViewType::uniform_runtime_nomemspace_type>;
+  // NOLINTNEXTLINE(bugprone-branch-clone)
   if (dst.span() > static_cast<size_t>(std::numeric_limits<int>::max())) {
     if (iterate == Kokkos::Iterate::Right)
       Kokkos::Impl::ViewFill<ViewTypeUniform, Kokkos::LayoutRight,
@@ -2232,6 +2234,7 @@ inline void deep_copy(
         std::conditional_t<ViewType::rank == 0,
                            typename ViewType::uniform_runtime_type,
                            typename ViewType::uniform_runtime_nomemspace_type>;
+    // NOLINTNEXTLINE(bugprone-branch-clone)
     if (dst.span() > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
       if (iterate == Kokkos::Iterate::Right)
         Kokkos::Impl::ViewFill<ViewTypeUniform, Kokkos::LayoutRight, ExecSpace,
