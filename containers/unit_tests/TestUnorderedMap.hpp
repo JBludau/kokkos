@@ -600,9 +600,6 @@ TEST(TEST_CATEGORY, UnorderedMap_View_as_value) {
   ASSERT_TRUE(map_copy.is_allocated());
 }
 
-// FIXME_SYCL
-//////////////////////////Tests for UnorderedMap with at type as value type that
-/// does not provide comparison operators
 struct NonComparableType {
   bool operator==(NonComparableType const &) = delete;
   bool operator!=(NonComparableType const &) = delete;
