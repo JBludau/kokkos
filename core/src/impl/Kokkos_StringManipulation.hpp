@@ -169,6 +169,23 @@ KOKKOS_FUNCTION constexpr to_chars_result to_chars_i(char *first, char *last,
   return {first + len, {}};
   // NOLINTEND(bugprone-invalid-enum-default-initialization)
 }
+
+// compares two buffers of char
+// not constexpr: cast from 'const void*' is not allowed in a
+// constant expression before C++26
+KOKKOS_INLINE_FUNCTION int memcmp(void const *lhs, void const *rhs,
+                                  std::size_t count) {
+  auto u1 = static_cast<unsigned char const *>(lhs);
+  auto u2 = static_cast<unsigned char const *>(rhs);
+  while (count-- != 0) {
+    if (*u1 != *u2) {
+      return (*u1 < *u2) ? -1 : +1;
+    }
+    ++u1;
+    ++u2;
+  }
+  return 0;
+}
 //</editor-fold>
 
 }  // namespace Impl

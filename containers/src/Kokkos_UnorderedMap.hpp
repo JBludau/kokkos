@@ -26,8 +26,8 @@ import kokkos.functional;
 #endif
 #include <Kokkos_Assert.hpp>
 #include <impl/Kokkos_Traits.hpp>
-#include <impl/Kokkos_Memcmp.hpp>
 #include <impl/Kokkos_UnorderedMap_impl.hpp>
+#include <impl/Kokkos_StringManipulation.hpp>
 #include <View/Kokkos_ViewCtor.hpp>
 
 #include <cstdint>

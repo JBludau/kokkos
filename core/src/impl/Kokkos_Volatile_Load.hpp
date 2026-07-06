@@ -3,7 +3,7 @@
 
 #include <Kokkos_Macros.hpp>
 #include <desul/atomics.hpp>
-#include <impl/Kokkos_Memcmp.hpp>
+#include <impl/Kokkos_StringManipulation.hpp>
 
 #include <type_traits>
 
