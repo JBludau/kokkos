@@ -27,8 +27,7 @@ namespace Kokkos {
 
 // FIXME_SYCL use old compare and swap way of storing value as we saw that
 // otherwise the volatile load will not be honored correctly
-#if defined KOKKOS_ENABLE_SYCL && defined(KOKKOS_COMPILER_INTEL_LLVM) && \
-    KOKKOS_COMPILER_INTEL_LLVM < 20260000
+#if defined KOKKOS_ENABLE_SYCL
 template <typename T>
 KOKKOS_FORCEINLINE_FUNCTION T volatile_load(T const volatile* const src_ptr) {
   T old = const_cast<const T&>(*src_ptr);

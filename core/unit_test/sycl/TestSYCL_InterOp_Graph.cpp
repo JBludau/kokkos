@@ -182,6 +182,7 @@ TEST(TEST_CATEGORY, interact_with_sycl_node) {
   try {
     auto sycl_graph_exec = graph.sycl_graph_exec();
     ASSERT_TRUE(sycl_graph_exec.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     sycl_graph_exec->update(sycl_node);
     FAIL();
   } catch (const std::exception& err) {
