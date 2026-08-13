@@ -125,22 +125,7 @@ void OpenMPInternal::resize_thread_data(size_t pool_reduce_bytes,
 }
 
 int OpenMPInternal::get_current_max_threads() noexcept {
-  // Using omp_get_max_threads(); is problematic in conjunction with
-  // Hwloc on Intel (essentially an initial call to the OpenMP runtime
-  // without a parallel region before will set a process mask for a single core
-  // The runtime will than bind threads for a parallel region to other cores on
-  // the entering the first parallel region and make the process mask the
-  // aggregate of the thread masks. The intend seems to be to make serial code
-  // run fast, if you compile with OpenMP enabled but don't actually use
-  // parallel regions or so static int omp_max_threads = omp_get_max_threads();
-
-  int count = 0;
-#pragma omp parallel
-  {
-#pragma omp atomic
-    ++count;
-  }
-  return count;
+  return omp_get_max_threads();
 }
 
 OpenMPInternal::OpenMPInternal(int arg_pool_size)
