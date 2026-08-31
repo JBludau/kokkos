@@ -1,7 +1,7 @@
 
 <div align="center">
 
-[<img src="https://github.com/kokkos/kokkos.github.io/blob/main/assets/img/kokkos-favicon.png" width="20%">](https://kokkos.org)
+[<img src="https://kokkos.org/download/logos/kokkos.png" width="20%">](https://kokkos.org)
 
 </div>
 
