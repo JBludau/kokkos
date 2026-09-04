@@ -7,8 +7,8 @@
 #include <cstddef>
 #include <new>
 #include <Kokkos_Core_fwd.hpp>
+#include <Kokkos_Concepts.hpp>
 #include <impl/Kokkos_Traits.hpp>
-#include <impl/Kokkos_Concepts.hpp>
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
