@@ -22,6 +22,47 @@ SPDX-License-Identifier: (BSD-3-Clause)
 namespace desul {
 namespace Impl {
 
+// #define DESUL_IMPL_ATOMIC_FETCH_OPER(ANNOTATION, HOST_OR_DEVICE)                       \
+  // template <class Oper,                                                                \
+            // class T,                                                                   \
+            // class MemoryOrder,                                                         \
+            // class MemoryScope,                                                         \
+            // std::enable_if_t<HOST_OR_DEVICE##_atomic_always_lock_free<T>, int> = 0>    \
+  // ANNOTATION T HOST_OR_DEVICE##_atomic_fetch_oper(                                     \
+      // const Oper& op,                                                                  \
+      // T* const dest,                                                                   \
+      // dont_deduce_this_parameter_t<const T> val,                                       \
+      // MemoryOrder order,                                                               \
+      // MemoryScope scope) {                                                             \
+    // using cas_t = atomic_compare_exchange_t<T>;                                        \
+    // cas_t oldval = [dest, scope] {                                                     \
+      // if constexpr (std::is_same<MemoryOrder, MemoryOrderRelaxed>::value) {            \
+        // return HOST_OR_DEVICE##_atomic_load(                                           \
+            // reinterpret_cast<cas_t*>(dest), MemoryOrderRelaxed{}, scope);              \
+      // } else {                                                                         \
+        // return *reinterpret_cast<cas_t*>(dest);                                        \
+      // }                                                                                \
+    // }();                                                                               \
+    // cas_t assume = oldval;                                                             \
+                                                                                       // \
+    // do {                                                                               \
+      // if constexpr (std::is_same<MemoryOrder, MemoryOrderRelaxed>::value) {            \
+        // if (check_early_exit(op, reinterpret_cast<T&>(oldval), val))                   \
+          // return reinterpret_cast<T&>(oldval);                                         \
+      // }                                                                                \
+      // assume = oldval;                                                                 \
+      // T newval = op.apply(reinterpret_cast<T&>(assume), val);                          \
+      // oldval =                                                                         \
+          // HOST_OR_DEVICE##_atomic_compare_exchange(reinterpret_cast<cas_t*>(dest),     \
+                                                   // assume,                             \
+                                                   // *reinterpret_cast<cas_t*>(&newval), \
+                                                   // order,                              \
+                                                   // scope);                             \
+    // } while (assume != oldval);                                                        \
+                                                                                       // \
+    // return reinterpret_cast<T&>(oldval);                                               \
+  // }
+
 #define DESUL_IMPL_ATOMIC_FETCH_OPER(ANNOTATION, HOST_OR_DEVICE)                       \
   template <class Oper,                                                                \
             class T,                                                                   \
@@ -36,12 +77,8 @@ namespace Impl {
       MemoryScope scope) {                                                             \
     using cas_t = atomic_compare_exchange_t<T>;                                        \
     cas_t oldval = [dest, scope] {                                                     \
-      if constexpr (std::is_same<MemoryOrder, MemoryOrderRelaxed>::value) {            \
         return HOST_OR_DEVICE##_atomic_load(                                           \
             reinterpret_cast<cas_t*>(dest), MemoryOrderRelaxed{}, scope);              \
-      } else {                                                                         \
-        return *reinterpret_cast<cas_t*>(dest);                                        \
-      }                                                                                \
     }();                                                                               \
     cas_t assume = oldval;                                                             \
                                                                                        \
@@ -62,6 +99,42 @@ namespace Impl {
                                                                                        \
     return reinterpret_cast<T&>(oldval);                                               \
   }
+
+// #define DESUL_IMPL_ATOMIC_FETCH_OPER(ANNOTATION, HOST_OR_DEVICE)                       \
+  // template <class Oper,                                                                \
+            // class T,                                                                   \
+            // class MemoryOrder,                                                         \
+            // class MemoryScope,                                                         \
+            // std::enable_if_t<HOST_OR_DEVICE##_atomic_always_lock_free<T>, int> = 0>    \
+  // ANNOTATION T HOST_OR_DEVICE##_atomic_fetch_oper(                                     \
+      // const Oper& op,                                                                  \
+      // T* const dest,                                                                   \
+      // dont_deduce_this_parameter_t<const T> val,                                       \
+      // MemoryOrder order,                                                               \
+      // MemoryScope scope) {                                                             \
+    // using cas_t = atomic_compare_exchange_t<T>;                                        \
+    // cas_t oldval = [dest, scope] {                                                     \
+        // return *reinterpret_cast<cas_t*>(dest);                                        \
+    // }();                                                                               \
+    // cas_t assume = oldval;                                                             \
+                                                                                       // \
+    // do {                                                                               \
+      // if constexpr (std::is_same<MemoryOrder, MemoryOrderRelaxed>::value) {            \
+        // if (check_early_exit(op, reinterpret_cast<T&>(oldval), val))                   \
+          // return reinterpret_cast<T&>(oldval);                                         \
+      // }                                                                                \
+      // assume = oldval;                                                                 \
+      // T newval = op.apply(reinterpret_cast<T&>(assume), val);                          \
+      // oldval =                                                                         \
+          // HOST_OR_DEVICE##_atomic_compare_exchange(reinterpret_cast<cas_t*>(dest),     \
+                                                   // assume,                             \
+                                                   // *reinterpret_cast<cas_t*>(&newval), \
+                                                   // order,                              \
+                                                   // scope);                             \
+    // } while (assume != oldval);                                                        \
+                                                                                       // \
+    // return reinterpret_cast<T&>(oldval);                                               \
+  // }
 
 DESUL_IMPL_ATOMIC_FETCH_OPER(DESUL_IMPL_HOST_FUNCTION, host)
 DESUL_IMPL_ATOMIC_FETCH_OPER(DESUL_IMPL_DEVICE_FUNCTION, device)
