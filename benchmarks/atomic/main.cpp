@@ -10,6 +10,48 @@ import kokkos.core;
 #include <Kokkos_Timer.hpp>
 #include <Kokkos_Random.hpp>
 
+
+struct DoubleWrap{
+  double val={0};
+};
+
+KOKKOS_INLINE_FUNCTION
+DoubleWrap operator+ (DoubleWrap const & d, double const & val)
+{
+  DoubleWrap ret;
+  ret.val = d.val;
+  ret.val += val;
+  return ret;
+}
+
+KOKKOS_INLINE_FUNCTION
+DoubleWrap operator+ (DoubleWrap const & d, DoubleWrap const & e)
+{
+  return d+e.val;
+}
+
+KOKKOS_INLINE_FUNCTION
+DoubleWrap operator* (DoubleWrap const & d, DoubleWrap const & e)
+{
+  DoubleWrap ret;
+  ret.val = d.val;
+  ret.val *= e.val;
+  return ret;
+}
+
+KOKKOS_INLINE_FUNCTION
+DoubleWrap& operator+= (DoubleWrap & d, double const & val)
+{
+  d.val+=val;
+  return d;
+}
+
+KOKKOS_INLINE_FUNCTION
+DoubleWrap& operator+= (DoubleWrap & d, DoubleWrap const & e)
+{
+  return d+=e.val;
+}
+
 template <class Scalar>
 double test_atomic(int L, int N, int M, int K, int R,
                    Kokkos::View<const int**> offsets) {
@@ -19,11 +61,11 @@ double test_atomic(int L, int N, int M, int K, int R,
   for (int r = 0; r < R; r++)
     Kokkos::parallel_for(
         L, KOKKOS_LAMBDA(const int& i) {
-          Scalar s = 2;
+          Scalar s{2};
           for (int m = 0; m < M; m++) {
             for (int k = 0; k < K; k++) s = s * s + s;
             const int idx = (i + offsets(i, m)) % N;
-            Kokkos::atomic_add(&output(idx), s);
+            desul::atomic_fetch_add(&output(idx), s, desul::MemoryOrderRelaxed{},desul::MemoryScopeDevice{});
           }
         });
   Kokkos::fence();
@@ -40,7 +82,7 @@ double test_no_atomic(int L, int N, int M, int K, int R,
   for (int r = 0; r < R; r++)
     Kokkos::parallel_for(
         L, KOKKOS_LAMBDA(const int& i) {
-          Scalar s = 2;
+          Scalar s{2};
           for (int m = 0; m < M; m++) {
             for (int k = 0; k < K; k++) s = s * s + s;
             const int idx = (i + offsets(i, m)) % N;
@@ -92,7 +134,7 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
     if (type == 1) time = test_atomic<int>(L, N, M, K, R, offsets);
     if (type == 2) time = test_atomic<long>(L, N, M, K, R, offsets);
     if (type == 3) time = test_atomic<float>(L, N, M, K, R, offsets);
-    if (type == 4) time = test_atomic<double>(L, N, M, K, R, offsets);
+    if (type == 4) time = test_atomic<DoubleWrap>(L, N, M, K, R, offsets);
     if (type == 5)
       time = test_atomic<Kokkos::complex<double> >(L, N, M, K, R, offsets);
 
@@ -100,7 +142,7 @@ int main(int argc, char* argv[]) {  // NOLINT(bugprone-exception-escape)
     if (type == 1) time2 = test_no_atomic<int>(L, N, M, K, R, offsets);
     if (type == 2) time2 = test_no_atomic<long>(L, N, M, K, R, offsets);
     if (type == 3) time2 = test_no_atomic<float>(L, N, M, K, R, offsets);
-    if (type == 4) time2 = test_no_atomic<double>(L, N, M, K, R, offsets);
+    if (type == 4) time2 = test_no_atomic<DoubleWrap>(L, N, M, K, R, offsets);
     if (type == 5)
       time2 = test_no_atomic<Kokkos::complex<double> >(L, N, M, K, R, offsets);
 
